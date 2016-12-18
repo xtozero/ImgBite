@@ -31,5 +31,11 @@
 ImgBite/*/x64
 ImgBite/*/Debug
 ImgBite/*/Release
-ImgBite/.vs/
+ImgBite/Debug
+ImgBite/Release
+ImgBite/.vs
 *.ipch
+
+*.user
+*db
+.suo
