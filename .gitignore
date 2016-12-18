@@ -31,4 +31,5 @@
 ImgBite/*/x64
 ImgBite/*/Debug
 ImgBite/*/Release
+ImgBite/.vs/
 *.ipch
