@@ -78,6 +78,7 @@
     <CustomBuildAfterTargets>
     </CustomBuildAfterTargets>
     <LibraryPath>../zlib/lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <CustomBuildAfterTargets>
@@ -158,9 +159,7 @@ copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)Lib\$(ProjectName).lib"<
       </Outputs>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)UnitTest\$(ProjectName).lib"
-copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)PaintTest\$(ProjectName).lib"
-copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)Lib\$(ProjectName).lib"</Command>
+      <Command>copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)Lib\x86\$(ProjectName).lib"</Command>
       <Message>
       </Message>
     </PostBuildEvent>
@@ -186,9 +185,7 @@ copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)Lib\$(ProjectName).lib"<
       </Outputs>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)UnitTest\$(ProjectName).lib"
-copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)PaintTest\$(ProjectName).lib"
-copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)Lib\$(ProjectName).lib"</Command>
+      <Command>copy /Y "$(TargetDIr)$(projectName).lib" "$(SolutionDIr)Lib\x64\$(ProjectName).lib"</Command>
       <Message>
       </Message>
     </PostBuildEvent>

@@ -116,8 +116,8 @@ void PNG::ReadIHDRChunk( std::ifstream& file )
 	IHDRChunk ihdr;
 	file.read( reinterpret_cast<char*>(&ihdr), sizeof( ihdr ) );
 
-	m_width = ihdr.m_width.GetHostOrder<size_t>( );
-	m_height = ihdr.m_height.GetHostOrder<size_t>( );
+	m_width = ihdr.m_width.GetHostOrder<unsigned int>( );
+	m_height = ihdr.m_height.GetHostOrder<unsigned int>( );
 	m_channelDepth = ihdr.m_bitDepth.GetHostOrder<BYTE>( );
 	m_bytePerChannel = static_cast<BYTE>(std::ceil( static_cast<float>(m_channelDepth) / 8 )); // byte per channel
 	m_bytePerPixel = m_bytePerChannel * GetPngPixelSize( ihdr.m_colorType.GetHostOrder<BYTE>( ) ); // byte per pixel
@@ -126,7 +126,7 @@ void PNG::ReadIHDRChunk( std::ifstream& file )
 void PNG::ReadIDATChunk( std::ifstream& file, int chunkLength, std::vector<BYTE>& src )
 {
 	// There can be multiple IDAT chunks.
-	int offset = src.size( );
+	size_t offset = src.size( );
 	src.resize( src.size( ) + chunkLength );
 
 	file.read( reinterpret_cast<char*>( src.data() + offset ), chunkLength );
@@ -147,13 +147,13 @@ std::vector<BYTE> PNG::InflatePixelData( std::vector<BYTE>& src )
 		return data;
 	}
 
-	stream.avail_in = src.size();
+	stream.avail_in = static_cast<unsigned int>( src.size() );
 	stream.next_in = src.data( );
 
 	constexpr int BUFFER_SIZE = 1024;
 
 	// Inflate data at once
-	stream.avail_out = data.size( );
+	stream.avail_out = static_cast<unsigned int>( data.size( ) );
 	stream.next_out = data.data( );
 	inflate( &stream, Z_NO_FLUSH );
 
@@ -207,9 +207,9 @@ void PNG::ApplyNoneFilter( const BYTE* data, size_t end )
 
 void PNG::ApplySubFilter( const BYTE* data, size_t end )
 {
-	int leftIdx = GetLeftPixelIndex( );
+	size_t leftIdx = GetLeftPixelIndex( );
 
-	int rowStartIdx = m_colors.size( );
+	size_t rowStartIdx = m_colors.size( );
 
 	for ( size_t i = 0; i < end; ++i, ++leftIdx )
 	{
@@ -221,7 +221,7 @@ void PNG::ApplySubFilter( const BYTE* data, size_t end )
 
 void PNG::ApplyUpFilter( const BYTE * data, size_t end )
 {
-	int aboveIdx = GetAbovePixelIndex( );
+	size_t aboveIdx = GetAbovePixelIndex( );
 
 	for ( size_t i = 0; i < end; ++i, ++aboveIdx )
 	{
@@ -233,10 +233,10 @@ void PNG::ApplyUpFilter( const BYTE * data, size_t end )
 
 void PNG::ApplyAverageFilter( const BYTE * data, size_t end )
 {
-	int aboveIdx = GetAbovePixelIndex( );
-	int leftIdx = GetLeftPixelIndex( );
+	size_t aboveIdx = GetAbovePixelIndex( );
+	size_t leftIdx = GetLeftPixelIndex( );
 
-	int rowStartIdx = m_colors.size( );
+	size_t rowStartIdx = m_colors.size( );
 
 	for ( size_t i = 0; i < end; ++i, ++aboveIdx, ++leftIdx )
 	{
@@ -250,11 +250,11 @@ void PNG::ApplyAverageFilter( const BYTE * data, size_t end )
 
 void PNG::ApplyPaethFilter( const BYTE * data, size_t end )
 {
-	int aboveIdx = GetAbovePixelIndex( );
-	int upperLeftIdx = GetUpperLeftPiexlIndex( );
-	int leftIdx = GetLeftPixelIndex( );
+	size_t aboveIdx = GetAbovePixelIndex( );
+	size_t upperLeftIdx = GetUpperLeftPiexlIndex( );
+	size_t leftIdx = GetLeftPixelIndex( );
 
-	int rowStartIdx = m_colors.size( );
+	size_t rowStartIdx = m_colors.size( );
 
 	for ( size_t i = 0; i < end; ++i, ++aboveIdx, ++upperLeftIdx, ++leftIdx )
 	{

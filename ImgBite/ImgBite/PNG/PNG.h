@@ -10,8 +10,8 @@ class PNG
 public:
 	bool Load( const char* filePath );
 
-	size_t GetWidth( ) const noexcept { return m_width; }
-	size_t GetHeight( ) const  noexcept { return m_height; }
+	unsigned int GetWidth( ) const noexcept { return m_width; }
+	unsigned int GetHeight( ) const  noexcept { return m_height; }
 	BYTE GetChannelDepth( ) const noexcept { return m_channelDepth; }
 	BYTE GetBytePerChannel( ) const noexcept { return m_bytePerChannel; }
 	BYTE GetBytePerPixel( ) const noexcept { return m_bytePerPixel; }
@@ -71,8 +71,8 @@ private:
 	size_t GetAbovePixelIndex( ) const noexcept { return m_colors.size( ) - GetBytePerPixel( ) * GetWidth(); }
 	size_t GetUpperLeftPiexlIndex( ) const noexcept { return GetAbovePixelIndex( ) - GetBytePerPixel( ); }
 
-	size_t m_width = 0;
-	size_t m_height = 0;
+	unsigned int m_width = 0;
+	unsigned int m_height = 0;
 	BYTE m_channelDepth = 0;
 	BYTE m_bytePerChannel = 0;
 	BYTE m_bytePerPixel = 0;

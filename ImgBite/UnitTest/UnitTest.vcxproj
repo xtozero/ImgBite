@@ -71,19 +71,21 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>../zlib/lib/x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath>../Lib/x86;../zlib/lib/x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>../zlib/lib/x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>../Lib/x64;../zlib/lib/x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>../zlib/lib/x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath>../Lib/x86;../zlib/lib/x86;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)Executable\$(Configuration)\x86\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>../zlib/lib/x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>../Lib/x64;../zlib/lib/x64;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)Executable\$(Configuration)\$(Platform)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

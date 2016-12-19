@@ -158,15 +158,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: Add any drawing code that uses hdc here...
-			size_t width = testPng.GetWidth( );
-			size_t height = testPng.GetHeight( );
+			unsigned int width = testPng.GetWidth( );
+			unsigned int height = testPng.GetHeight( );
 			unsigned char bpp = testPng.GetBytePerPixel( );
 
 			const std::vector<unsigned char>& colors = testPng.GetByteStream( );
 
-			for ( size_t i = 0; i < height; ++i )
+			for ( unsigned int i = 0; i < height; ++i )
 			{
-				for ( size_t j = 0; j < width; ++j )
+				for ( unsigned int j = 0; j < width; ++j )
 				{
 					size_t pos = ( i * width * bpp ) + ( j * bpp );
 					if ( colors.size( ) < pos + 2 )
