@@ -67,9 +67,10 @@ private:
 	void ApplyAverageFilter( const BYTE* data, size_t end );
 	void ApplyPaethFilter( const BYTE* data, size_t end );
 
-	size_t GetLeftPixelIndex( ) const noexcept { return m_colors.size() - GetBytePerPixel( ); }
-	size_t GetAbovePixelIndex( ) const noexcept { return m_colors.size( ) - GetBytePerPixel( ) * GetWidth(); }
-	size_t GetUpperLeftPiexlIndex( ) const noexcept { return GetAbovePixelIndex( ) - GetBytePerPixel( ); }
+	using diff_type = std::ptrdiff_t;
+	diff_type GetLeftPixelIndex( ) const noexcept { return static_cast<diff_type>( m_colors.size() - GetBytePerPixel( ) ); }
+	diff_type GetAbovePixelIndex( ) const noexcept { return static_cast<diff_type>( m_colors.size( ) - GetBytePerPixel( ) * GetWidth() ); }
+	diff_type GetUpperLeftPiexlIndex( ) const noexcept { return static_cast<diff_type>( GetAbovePixelIndex( ) - GetBytePerPixel( ) ); }
 
 	unsigned int m_width = 0;
 	unsigned int m_height = 0;
