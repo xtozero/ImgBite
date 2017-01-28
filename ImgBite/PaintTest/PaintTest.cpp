@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "PaintTest.h"
 
+#include "../ImgBite/JFIF/JFIF.h"
 #include "../ImgBite/PNG/PNG.h"
 
 #pragma comment( lib, "ImgBite.lib" )
@@ -22,6 +23,7 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 PNG testPng;
+JFIF testJFIF;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -104,7 +106,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // Store instance handle in our global variable
 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, 600, 600, nullptr, nullptr, hInstance, nullptr);
+      CW_USEDEFAULT, 0, 1035, 570, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -134,6 +136,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		{
 			testPng.Load( "../Image/lena.png" );
+			testJFIF.Load( "../Image/lena.jpg" );
 		}
 		break;
     case WM_COMMAND:
@@ -157,24 +160,51 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-			unsigned int width = testPng.GetWidth( );
-			unsigned int height = testPng.GetHeight( );
-			unsigned char bpp = testPng.GetBytePerPixel( );
 
-			const std::vector<unsigned char>& colors = testPng.GetByteStream( );
+			// Draw jpeg
+			{ 
+				unsigned int width = testJFIF.GetWidth( );
+				unsigned int height = testJFIF.GetHeight( );
+				unsigned char bpp = testJFIF.GetBytePerPixel( );
 
-			for ( unsigned int i = 0; i < height; ++i )
-			{
-				for ( unsigned int j = 0; j < width; ++j )
+				const std::vector<unsigned char>& colors = testJFIF.GetByteStream( );
+
+				for ( unsigned int i = 0; i < height; ++i )
 				{
-					size_t pos = ( i * width * bpp ) + ( j * bpp );
-					if ( colors.size( ) < pos + 2 )
+					for ( unsigned int j = 0; j < width; ++j )
 					{
-						break;
-					}
+						size_t pos = (i * width * bpp) + (j * bpp);
+						if ( colors.size( ) < pos + 2 )
+						{
+							break;
+						}
 
-					SetPixel( hdc, j, i, RGB( colors[pos], colors[pos+1], colors[pos+2] ) );
+						SetPixel( hdc, j, i, RGB( colors[pos], colors[pos + 1], colors[pos + 2] ) );
+					}
+				}
+			}
+			
+			// Draw png
+			{
+				unsigned int startOffet = testJFIF.GetWidth( );
+				unsigned int width = testPng.GetWidth( );
+				unsigned int height = testPng.GetHeight( );
+				unsigned char bpp = testPng.GetBytePerPixel( );
+
+				const std::vector<unsigned char>& colors = testPng.GetByteStream( );
+
+				for ( unsigned int i = 0; i < height; ++i )
+				{
+					for ( unsigned int j = 0; j < width; ++j )
+					{
+						size_t pos = (i * width * bpp) + (j * bpp);
+						if ( colors.size( ) < pos + 2 )
+						{
+							break;
+						}
+
+						SetPixel( hdc, j + startOffet, i, RGB( colors[pos], colors[pos + 1], colors[pos + 2] ) );
+					}
 				}
 			}
 

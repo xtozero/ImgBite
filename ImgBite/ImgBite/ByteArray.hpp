@@ -4,16 +4,16 @@
 #include <cassert>
 
 template <int N>
-class ByteArray
+class ByteArray final
 {
 public:
-	unsigned char* operator&( )
+	unsigned char* operator&( ) noexcept
 	{
 		return m_bytes;
 	}
 
 	template <typename T>
-	void operator=( const T& value )
+	void operator=( const T& value ) noexcept
 	{
 		static_assert(sizeof( T ) == N, "Data type size is not matched");
 		
@@ -27,14 +27,14 @@ public:
 		}
 	}
 
-	unsigned char operator[]( const size_t idx )
+	unsigned char operator[]( const size_t idx ) const noexcept
 	{
 		assert( idx < N );
 		return m_bytes[idx];
 	}
 
 	template <typename T>
-	T Get() const
+	T Get() const noexcept
 	{
 		static_assert(sizeof( T ) == N, "Data type size is not matched");
 
@@ -43,20 +43,26 @@ public:
 	}
 
 	template <typename T>
-	T GetNetworkOrder( ) const
+	T GetNetworkOrder( ) const noexcept
 	{
 		return GetByteSwapOrder<T>( );
 	}
 
 	template <typename T>
-	T GetHostOrder( ) const
+	T GetHostOrder( ) const noexcept
 	{
 		return GetByteSwapOrder<T>( );
+	}
+
+	template <typename T>
+	operator T( ) const noexcept
+	{
+		return GetHostOrder<T>( );
 	}
 
 private:
 	template <typename T>
-	T GetByteSwapOrder( ) const
+	T GetByteSwapOrder( ) const noexcept
 	{
 		static_assert(sizeof( T ) == N, "Data type size is not matched");
 

@@ -16,6 +16,9 @@
     <Filter Include="PNG">
       <UniqueIdentifier>{d1fcba36-65fa-4bea-b835-861234b12ede}</UniqueIdentifier>
     </Filter>
+    <Filter Include="JFIF">
+      <UniqueIdentifier>{021f2c13-6e59-480f-bd6f-341084b8064d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -33,6 +36,21 @@
     <ClInclude Include="ByteArray.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="JFIF\JFIF.h">
+      <Filter>JFIF</Filter>
+    </ClInclude>
+    <ClInclude Include="ByteBufferReader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JFIF\JFIFDebugger.h">
+      <Filter>JFIF</Filter>
+    </ClInclude>
+    <ClInclude Include="BitReader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DCT.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -40,6 +58,12 @@
     </ClCompile>
     <ClCompile Include="PNG\PNG.cpp">
       <Filter>PNG</Filter>
+    </ClCompile>
+    <ClCompile Include="JFIF\JFIF.cpp">
+      <Filter>JFIF</Filter>
+    </ClCompile>
+    <ClCompile Include="JFIF\JFIFDebugger.cpp">
+      <Filter>JFIF</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

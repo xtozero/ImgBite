@@ -1,22 +1,11 @@
 #pragma once
 
-#include "../ByteArray.hpp"
 #include "../Image.h"
 
-#include <vector>
-
-class PNG
+class PNG : public IMAGE
 {
 public:
 	bool Load( const char* filePath );
-
-	unsigned int GetWidth( ) const noexcept { return m_width; }
-	unsigned int GetHeight( ) const  noexcept { return m_height; }
-	BYTE GetChannelDepth( ) const noexcept { return m_channelDepth; }
-	BYTE GetBytePerChannel( ) const noexcept { return m_bytePerChannel; }
-	BYTE GetBytePerPixel( ) const noexcept { return m_bytePerPixel; }
-
-	const std::vector<BYTE>& GetByteStream( ) const noexcept { return m_colors; }
 
 private:
 	struct ChunkBegin
@@ -50,8 +39,6 @@ private:
 		PAETH
 	};
 
-	void Initialize( ) noexcept;
-
 	void HandleChunk( std::ifstream& file, const ChunkBegin& header, std::vector<BYTE>& src );
 
 	void ReadIHDRChunk( std::ifstream& file );
@@ -71,13 +58,5 @@ private:
 	diff_type GetLeftPixelIndex( ) const noexcept { return static_cast<diff_type>( m_colors.size() - GetBytePerPixel( ) ); }
 	diff_type GetAbovePixelIndex( ) const noexcept { return static_cast<diff_type>( m_colors.size( ) - GetBytePerPixel( ) * GetWidth() ); }
 	diff_type GetUpperLeftPiexlIndex( ) const noexcept { return static_cast<diff_type>( GetAbovePixelIndex( ) - GetBytePerPixel( ) ); }
-
-	unsigned int m_width = 0;
-	unsigned int m_height = 0;
-	BYTE m_channelDepth = 0;
-	BYTE m_bytePerChannel = 0;
-	BYTE m_bytePerPixel = 0;
-
-	std::vector<BYTE> m_colors;
 };
 

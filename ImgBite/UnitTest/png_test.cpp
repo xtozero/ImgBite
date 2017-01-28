@@ -1,5 +1,3 @@
-#define WIN32_LEAN_AND_MEAN
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
 #include "../ImgBite/PNG/PNG.h"
@@ -9,12 +7,12 @@
 #pragma comment( lib, "ImgBite.lib" )
 #pragma comment( lib, "Ws2_32.lib" )
 
-TEST_CASE( "Declare sattic lib class" )
+TEST_CASE( "Declare static lib png class" )
 {
 	PNG png;
 }
 
-TEST_CASE( "Call sattic lib function" )
+TEST_CASE( "Call static lib png function" )
 {
 	PNG png;
 	REQUIRE_FALSE( png.Load( "file path" ) );
@@ -45,13 +43,13 @@ TEST_CASE( "Byte Array assign" )
 	ByteArray<4> floatType;
 	floatType = 123.456f;
 
-	REQUIRE( sizeof( float ) == sizeof( float ) );
+	REQUIRE( sizeof( floatType ) == sizeof( float ) );
 	REQUIRE( floatType.Get<float>( ) == 123.456f );
 
 	ByteArray<8> doubleType;
 	doubleType = 9876.54321;
 
-	REQUIRE( sizeof( double ) == sizeof( double ) );
+	REQUIRE( sizeof( doubleType ) == sizeof( double ) );
 	REQUIRE( doubleType.Get<double>( ) == 9876.54321 );
 }
 

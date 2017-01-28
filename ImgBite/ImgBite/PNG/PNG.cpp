@@ -55,14 +55,14 @@ bool PNG::Load( const char* filePath )
 	std::vector<BYTE> src;
 	std::vector<BYTE> data;
 
+	ChunkBegin header;
+	ChunkEnd tail;
 	while ( file )
 	{
-		ChunkBegin header;
 		file.read( reinterpret_cast<char*>(&header), sizeof( header ) );
 
 		HandleChunk( file, header, src );
 
-		ChunkEnd tail;
 		file.read( reinterpret_cast<char*>(&tail), sizeof( tail ) );
 	}
 
@@ -80,17 +80,6 @@ bool PNG::Load( const char* filePath )
 	}
 
 	return true;
-}
-
-void PNG::Initialize( ) noexcept
-{
-	m_width = 0;
-	m_height = 0;
-	m_channelDepth = 0;
-	m_bytePerChannel = 0;
-	m_bytePerPixel = 0;
-
-	m_colors.clear( );
 }
 
 void PNG::HandleChunk( std::ifstream& file, const ChunkBegin& header, std::vector<BYTE>& src )
