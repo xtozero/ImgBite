@@ -120,9 +120,12 @@ void JFIF::HandleMarker( std::ifstream & file, const BYTE marker )
 	}
 
 	size_t length = ReadFieldLength( file );
-	BYTE buffer[MAX_BUFFER];
+	//BYTE buffer[MAX_BUFFER];
+	//file.read( reinterpret_cast<char*>( buffer ), length );
 
-	file.read( reinterpret_cast<char*>( buffer ), length );
+	std::vector<BYTE> buffer;
+	buffer.resize( length );
+	file.read( reinterpret_cast<char*>(buffer.data()), length );
 
 	if ( marker == DQT )
 	{
@@ -139,7 +142,9 @@ void JFIF::HandleMarker( std::ifstream & file, const BYTE marker )
 		std::streampos cur = file.tellg( );
 		length = static_cast<size_t>( FindNextMarkerPos( file ) - cur );
 		assert( MAX_BUFFER >= length );
-		file.read( reinterpret_cast<char*>(buffer), length );
+		buffer.resize( length );
+		file.read( reinterpret_cast<char*>(buffer.data()), length );
+		//file.read( reinterpret_cast<char*>(buffer), length );
 		
 		HandleScan( buffer, length );
 	}
@@ -172,7 +177,7 @@ void JFIF::HandleMarker( std::ifstream & file, const BYTE marker )
 	}
 }
 
-void JFIF::HandleJFIFAppMarker( const BYTE( & )[MAX_BUFFER], const size_t )
+void JFIF::HandleJFIFAppMarker( const std::vector<BYTE>& buffer, const size_t )
 {
 	// Don't need to handle JFIP app marker yet
 
@@ -189,14 +194,14 @@ void JFIF::HandleJFIFAppMarker( const BYTE( & )[MAX_BUFFER], const size_t )
 	//char yThumbnail = br.Get<ByteArray<1>>( );
 }
 
-void JFIF::HandleOtherAppMarker( const BYTE( & )[MAX_BUFFER], const size_t )
+void JFIF::HandleOtherAppMarker( const std::vector<BYTE>& buffer, const size_t )
 {
 	//Don't have to handle other app markers
 }
 
-void JFIF::HandleSOFMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
+void JFIF::HandleSOFMarker( const std::vector<BYTE>& buffer, const size_t length )
 {
-	ByteBufferReader br( buffer, length );
+	ByteBufferReader br( buffer.data(), length );
 
 	// skip samplingPrecision
 	br.Get<BYTE>( );
@@ -246,9 +251,9 @@ void JFIF::HandleSOFMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t leng
 	m_mcuHeight = static_cast<int>( std::ceil( static_cast<float>( m_height ) / m_mcuSizeY ) );
 }
 
-void JFIF::HandleDQTMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
+void JFIF::HandleDQTMarker( const std::vector<BYTE>& buffer, const size_t length )
 {
-	ByteBufferReader br( buffer, length );
+	ByteBufferReader br( buffer.data(), length );
 	
 	while ( br )
 	{
@@ -268,9 +273,9 @@ void JFIF::HandleDQTMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t leng
 	}
 }
 
-void JFIF::HandleDHTMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
+void JFIF::HandleDHTMarker( const std::vector<BYTE>& buffer, const size_t length )
 {
-	ByteBufferReader br( buffer, length );
+	ByteBufferReader br( buffer.data(), length );
 
 	while ( br )
 	{
@@ -307,9 +312,10 @@ void JFIF::HandleDHTMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t leng
 	}
 }
 
-void JFIF::HandleSOSMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
+void JFIF::HandleSOSMarker( const std::vector<BYTE>& buffer, const size_t length )
+//void JFIF::HandleSOSMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
 {
-	ByteBufferReader br( buffer, length );
+	ByteBufferReader br( buffer.data(), length );
 
 	m_comCount = static_cast<int>( br.Get<BYTE>( ) );
 
@@ -329,12 +335,205 @@ void JFIF::HandleSOSMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t leng
 	//BYTE successiveAppr = br.Get<BYTE>( );
 }
 
+void JFIF::HandleScan( std::vector<BYTE>& buffer, const size_t length )
+{
+	size_t compressed = length;
+
+	// Change 0xFF00 to 0xFF
+	for ( size_t i = 0, j = 0; i < length && j < length; ++i, ++j )
+	{
+		buffer[i] = buffer[j];
+
+		if ( buffer[j] == 0xFF )
+		{
+			++j;
+			--compressed;
+		}
+	}
+
+	BitReader bt( buffer.data(), compressed );
+
+	for ( int y = 0; y < m_mcuHeight; ++y )
+	{
+		for ( int x = 0; x < m_mcuWidth; ++x )
+		{
+			ProcessDecode( bt, x, y );
+		}
+	}
+
+	Convert2RGB( );
+}
+
+void JFIF::HandleDRIMarker( const std::vector<BYTE>& buffer, const size_t length )
+{
+	ByteBufferReader br( buffer.data(), length );
+
+	m_restartInterval = br.Get<short>( );
+}
+
+void JFIF::HandleJFIFAppMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t )
+{
+	// Don't need to handle JFIP app marker yet
+
+	//ByteBufferReader br( &buffer[5], length - 5 );
+
+	//char major = br.Get<ByteArray<1>>( );
+	//char minor = br.Get<ByteArray<1>>( );
+	//char units = br.Get<ByteArray<1>>( );
+
+	//short xDensity = br.Get<ByteArray<2>>( );
+	//short yDensity = br.Get<ByteArray<2>>( );
+	//
+	//char xThumbnail = br.Get<ByteArray<1>>( );
+	//char yThumbnail = br.Get<ByteArray<1>>( );
+}
+
+void JFIF::HandleOtherAppMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t )
+{
+	//Don't have to handle other app markers
+}
+
+void JFIF::HandleSOFMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
+{
+	ByteBufferReader br( buffer, length );
+
+	// skip samplingPrecision
+	br.Get<BYTE>();
+
+	short height = br.Get<ByteArray<2>>();
+	short width = br.Get<ByteArray<2>>();
+	m_height = static_cast<unsigned int>(height);
+	m_width = static_cast<unsigned int>(width);
+
+	m_bytePerPixel = m_comCount = static_cast<int>(br.Get<BYTE>());
+	m_frameDesc.clear();
+	m_frameDesc.reserve( m_comCount );
+
+	m_componentPixel.resize( m_comCount );
+	for ( auto& pixel : m_componentPixel )
+	{
+		pixel.resize( m_width * m_height );
+	}
+
+	m_colors.resize( m_width * m_height * m_bytePerPixel );
+
+	BYTE comID = 0;
+	BYTE samplingFreq = 0;
+	BYTE quantTableID = 0;
+
+	for ( int i = 0; i < m_comCount; ++i )
+	{
+		comID = br.Get<BYTE>();
+		samplingFreq = br.Get<BYTE>();
+		quantTableID = br.Get<BYTE>();
+
+		m_frameDesc.emplace_back( comID, samplingFreq, quantTableID );
+		m_maxSamplingFreqX = std::max( m_maxSamplingFreqX, m_frameDesc[i].m_xSamplingFreq );
+		m_maxSamplingFreqY = std::max( m_maxSamplingFreqY, m_frameDesc[i].m_ySamplingFreq );
+	}
+
+	for ( int i = 0; i < m_comCount; ++i )
+	{
+		auto& frame = m_frameDesc[i];
+		frame.m_width = m_width * frame.m_xSamplingFreq / m_maxSamplingFreqX;
+		frame.m_height = m_height * frame.m_ySamplingFreq / m_maxSamplingFreqY;;
+	}
+
+	m_mcuSizeX = m_maxSamplingFreqX << 3;
+	m_mcuSizeY = m_maxSamplingFreqY << 3;
+	m_mcuWidth = static_cast<int>(std::ceil( static_cast<float>(m_width) / m_mcuSizeX ));
+	m_mcuHeight = static_cast<int>(std::ceil( static_cast<float>(m_height) / m_mcuSizeY ));
+}
+
+void JFIF::HandleDQTMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
+{
+	ByteBufferReader br( buffer, length );
+
+	while ( br )
+	{
+		BYTE tableIdentifier = br.Get<BYTE>();
+
+		bool isWORD = ((tableIdentifier & 0xF0) >> 4) == 1;
+		BYTE tableID = (tableIdentifier & 0x0F);
+
+		assert( tableID < MAX_TABLE );
+
+		for ( int i = 0; i < QUANT_TALBE_SIZE; ++i )
+		{
+			m_quantTable[tableID][i] = isWORD ? br.Get<ByteArray<2>>() : static_cast<short>(br.Get<char>());
+		}
+
+		++m_quantTableCount;
+	}
+}
+
+void JFIF::HandleDHTMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
+{
+	ByteBufferReader br( buffer, length );
+
+	while ( br )
+	{
+		BYTE tableIdentifier = br.Get<BYTE>();
+
+		int tableClass = (tableIdentifier & 0xF0) >> 4;
+		int tableID = (tableIdentifier & 0x0F);
+
+		assert( tableID < MAX_TABLE );
+
+		std::array<BYTE, MAX_CODE_LENGTH> counter = {};
+
+		for ( auto& count : counter )
+		{
+			count = br.Get<char>();
+		}
+
+		HuffmanTable& table = m_huffmanTable[tableClass][tableID];
+
+		int range = 0;
+		int remain = 65536;
+		BYTE symbol = 0;
+
+		for ( int i = 0; i < 16; ++i )
+		{
+			remain >>= 1;
+			for ( int j = 0; j < counter[i]; ++j )
+			{
+				symbol = br.Get<BYTE>();
+				range += remain;
+				table.emplace_back( range - 1, i + 1, symbol );
+			}
+		}
+	}
+}
+
+void JFIF::HandleSOSMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
+{
+	ByteBufferReader br( buffer, length );
+
+	m_comCount = static_cast<int>(br.Get<BYTE>());
+
+	m_scanDesc.clear();
+	m_scanDesc.reserve( m_comCount );
+
+	for ( int i = 0; i < m_comCount; ++i )
+	{
+		BYTE comID = br.Get<BYTE>();
+		BYTE huffID = br.Get<BYTE>();
+
+		m_scanDesc.emplace_back( comID, huffID );
+	}
+
+	//BYTE spectralStart = br.Get<BYTE>( );
+	//BYTE spectralEnd = br.Get<BYTE>( );
+	//BYTE successiveAppr = br.Get<BYTE>( );
+}
+
 void JFIF::HandleScan( BYTE( &buffer )[MAX_BUFFER], const size_t length )
 {
 	size_t compressed = length;
 
 	// Change 0xFF00 to 0xFF
-	for ( size_t i = 0, j = 0; i < length || j < length; ++i, ++j )
+	for ( size_t i = 0, j = 0; i < length && j < length; ++i, ++j )
 	{
 		buffer[i] = buffer[j];
 
@@ -355,15 +554,16 @@ void JFIF::HandleScan( BYTE( &buffer )[MAX_BUFFER], const size_t length )
 		}
 	}
 
-	Convert2RGB( );
+	Convert2RGB();
 }
 
 void JFIF::HandleDRIMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length )
 {
 	ByteBufferReader br( buffer, length );
 
-	m_restartInterval = br.Get<short>( );
+	m_restartInterval = br.Get<short>();
 }
+
 
 void JFIF::ProcessDecode( BitReader& bt, const int mcuX, const int mcuY )
 {

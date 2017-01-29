@@ -75,6 +75,16 @@ private:
 	void HandleScan( BYTE( &buffer )[MAX_BUFFER], const size_t length );
 	void HandleDRIMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length );
 
+	void HandleJFIFAppMarker( const std::vector<BYTE>& buffer, const size_t length );
+	void HandleOtherAppMarker( const std::vector<BYTE>& buffer, const size_t length );
+	void HandleSOFMarker( const std::vector<BYTE>& buffer, const size_t length );
+
+	void HandleDQTMarker( const std::vector<BYTE>& buffer, const size_t length );
+	void HandleDHTMarker( const std::vector<BYTE>& buffer, const size_t length );
+	void HandleSOSMarker( const std::vector<BYTE>& buffer, const size_t length );
+	void HandleScan( std::vector<BYTE>& buffer, const size_t length );
+	void HandleDRIMarker( const std::vector<BYTE>& buffer, const size_t length );
+
 	void ProcessDecode( BitReader& bt, const int mcuX, const int mcuY );
 	void DoRowIDCT( std::array<int, QUANT_TALBE_SIZE>& table );
 	void DoColIDCT( std::array<int, QUANT_TALBE_SIZE>& table );
