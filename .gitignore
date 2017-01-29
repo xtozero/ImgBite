@@ -39,3 +39,4 @@ ImgBite/.vs
 *.user
 *db
 .suo
+*.res
