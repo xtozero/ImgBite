@@ -3,6 +3,7 @@
 #include "../Image.h"
 
 #include <array>
+#include <fstream>
 
 class JFIFDebugger;
 class BitReader;
@@ -14,33 +15,42 @@ public:
 
 	enum MARKER_TYPE
 	{
-		SOI = 0xD8,
-		APP0 = 0xE0,
-		APPF = 0xEF,
-		DQT = 0xDB,
-		SOF0 = 0xC0,
-		SOFF = 0xCF,
+		SOF0 = 0xC0,		// Baseline DCT
 		DHT = 0xC4,
 		SOS = 0xDA,
-		DRI = 0xDD,
 		RST0 = 0xD0,
-		RSTF = 0xDF,
+		SOI = 0xD8,
+		DQT = 0xDB,
 		DNL = 0xDC,
+		DRI = 0xDD,
+		RSTF = 0xDF,
 		EOI = 0xD9,
+		APP0 = 0xE0,
+		APP1 = 0xE1,
 		COM = 0xFE
 	};
 
 public:
-	//Dubug class
+	// Dubug class
 	friend JFIFDebugger;
 
+	JFIF( ) = default;
+	~JFIF( ) = default;
+	JFIF( const JFIF& ) = default;
+	JFIF( JFIF&& ) = default;
+	JFIF& operator=( const JFIF& ) = default;
+	JFIF& operator=( JFIF&& ) = default;
 private:
-	static constexpr int MAX_BUFFER = 65536 << 3;
-
+	// literals
 	static constexpr int QUANT_TALBE_SIZE = 64;
 	static constexpr int MAX_TABLE = 4;
 
-	//	quantization table access order
+	static constexpr int MAX_CODE_LENGTH = 16;
+	static constexpr int MCU_WIDTH = 8;
+	static constexpr int MCU_SIZE = MCU_WIDTH * MCU_WIDTH;
+	static constexpr int CHANNEL_COUNT = 3;
+
+	// quantization table access order
 	static constexpr BYTE QTABLE_ORDER[QUANT_TALBE_SIZE] = {
 		0,	1,	8,	16,	9,	2,	3,	10,
 		17,	24,	32,	25,	18,	11,	4,	5,
@@ -52,44 +62,50 @@ private:
 		53,	60,	61,	54,	47,	55,	62,	63,
 	};
 
-	static constexpr int MAX_CODE_LENGTH = 16;
+	//-------------------------------------------------------------------------------------------------------------
+	//	Functions
+	//-------------------------------------------------------------------------------------------------------------
 
-	static constexpr int MCU_WIDTH = 8;
-	static constexpr int MCU_SIZE = MCU_WIDTH * MCU_WIDTH;
-	static constexpr int CHANNEL_COUNT = 3;
+	// File Read Functions
+	BYTE ReadNextMarker( );
+	std::streampos FindNextMarkerPos( );
+	size_t ReadFieldLength( );
 
-	BYTE ReadNextMarker( std::ifstream& file ) const;
-	std::streampos FindNextMarkerPos( std::ifstream& file );
+	// JFIF Marker Handle Functions
+	void InitHandler( );
+	void HandleMarker( const BYTE marker );
+	void HandleJFIFAppMarker( );
+	void HandleUnsupportedAppMarker( );
+	void HandleIgnoreAppMarker( );
+	void HandleSOFMarker( );
+	void HandleDQTMarker( );
+	void HandleDHTMarker( );
+	void HandleSOSMarker( );
+	void HandleScan( );
+	void HandleDRIMarker( );
 
-	size_t ReadFieldLength( std::ifstream& file );
-
-	void HandleMarker( std::ifstream& file, const BYTE marker );
-	
-	void HandleJFIFAppMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length );
-	void HandleOtherAppMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length );
-	void HandleSOFMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length );
-
-	void HandleDQTMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length );
-	void HandleDHTMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length );
-	void HandleSOSMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length );
-	void HandleScan( BYTE( &buffer )[MAX_BUFFER], const size_t length );
-	void HandleDRIMarker( const BYTE( &buffer )[MAX_BUFFER], const size_t length );
-
-	void HandleJFIFAppMarker( const std::vector<BYTE>& buffer, const size_t length );
-	void HandleOtherAppMarker( const std::vector<BYTE>& buffer, const size_t length );
-	void HandleSOFMarker( const std::vector<BYTE>& buffer, const size_t length );
-
-	void HandleDQTMarker( const std::vector<BYTE>& buffer, const size_t length );
-	void HandleDHTMarker( const std::vector<BYTE>& buffer, const size_t length );
-	void HandleSOSMarker( const std::vector<BYTE>& buffer, const size_t length );
-	void HandleScan( std::vector<BYTE>& buffer, const size_t length );
-	void HandleDRIMarker( const std::vector<BYTE>& buffer, const size_t length );
-
+	// Decode Functions
 	void ProcessDecode( BitReader& bt, const int mcuX, const int mcuY );
+	
+	class HuffmanInfo;
+	using HuffmanTable = std::vector<HuffmanInfo>;
+	std::tuple<int, BYTE> GetVLD( BitReader& bt, const HuffmanTable& huffmanTable );
+	
+	// Inverse Discrete Cosine Transform Functions
 	void DoRowIDCT( std::array<int, QUANT_TALBE_SIZE>& table );
 	void DoColIDCT( std::array<int, QUANT_TALBE_SIZE>& table );
 
 	void Convert2RGB( );
+
+	//-------------------------------------------------------------------------------------------------------------
+	//	Variables
+	//-------------------------------------------------------------------------------------------------------------
+	using HandleMarkerFunc = void (JFIF::*)(void);
+	std::array<HandleMarkerFunc, 0x100> m_markerHandler;
+
+	std::ifstream m_imgFile;
+	std::vector<BYTE> m_internalBuf = {};
+	size_t m_internalBufLength = 0;
 
 	class HuffmanInfo
 	{
@@ -104,9 +120,6 @@ private:
 		BYTE m_codeLength = 0;
 		BYTE m_symbol = 0;
 	};
-
-	using HuffmanTable = std::vector<HuffmanInfo>;
-	int GetVLD( BitReader& bt, const HuffmanTable& huffmanTable, BYTE& code/*out*/ );
 
 	using QuantTable = std::array<unsigned short, QUANT_TALBE_SIZE>;
 	using QuantTables = std::array<QuantTable, MAX_TABLE>;
@@ -155,8 +168,6 @@ private:
 		BYTE m_xSamplingFreq = 0;
 		BYTE m_ySamplingFreq = 0;
 		BYTE m_quantTableID = 0;
-		int m_width = 0;
-		int m_height = 0;
 	};
 	std::vector<FrameInfo> m_frameDesc = {};
 
@@ -166,7 +177,7 @@ private:
 	int m_mcuHeight = 0;
 	BYTE m_comCount = 0;
 
-	std::vector<std::vector<int>> m_componentPixel;
+	std::vector<std::vector<int>> m_componentPixel = {};
 
 	BYTE m_maxSamplingFreqX = 0;
 	BYTE m_maxSamplingFreqY = 0;

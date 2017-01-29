@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PaintTest", "PaintTest\Pain
 		{7C08CBD3-ECBC-4887-A55E-5494DAD99B4E} = {7C08CBD3-ECBC-4887-A55E-5494DAD99B4E}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PerformanceTest", "PerformanceTest\PerformanceTest.vcxproj", "{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -47,6 +49,14 @@ Global
 		{DFF15CDD-2B31-42F8-8F7D-C437D9D90B6D}.Release|x64.Build.0 = Release|x64
 		{DFF15CDD-2B31-42F8-8F7D-C437D9D90B6D}.Release|x86.ActiveCfg = Release|Win32
 		{DFF15CDD-2B31-42F8-8F7D-C437D9D90B6D}.Release|x86.Build.0 = Release|Win32
+		{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}.Debug|x64.ActiveCfg = Debug|x64
+		{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}.Debug|x64.Build.0 = Debug|x64
+		{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}.Debug|x86.ActiveCfg = Debug|Win32
+		{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}.Debug|x86.Build.0 = Debug|Win32
+		{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}.Release|x64.ActiveCfg = Release|x64
+		{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}.Release|x64.Build.0 = Release|x64
+		{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}.Release|x86.ActiveCfg = Release|Win32
+		{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
