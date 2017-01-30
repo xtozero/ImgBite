@@ -35,7 +35,7 @@ public:
 
 	int GetBit( int bits )
 	{
-		if ( bits == 0 )
+		if ( bits <= 0 )
 		{
 			return 0;
 		}

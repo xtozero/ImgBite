@@ -27,6 +27,8 @@ public:
 		EOI = 0xD9,
 		APP0 = 0xE0,
 		APP1 = 0xE1,
+		APP12 = 0xEC,		// Adobe Ducky
+		APP13 = 0xEE,		// Adobe
 		COM = 0xFE
 	};
 

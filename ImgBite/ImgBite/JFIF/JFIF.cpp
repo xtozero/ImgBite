@@ -117,6 +117,8 @@ void JFIF::InitHandler( )
 	m_markerHandler[EOI] = &JFIF::HandleIgnoreAppMarker;
 	m_markerHandler[APP0] = &JFIF::HandleJFIFAppMarker;
 	m_markerHandler[APP1] = &JFIF::HandleIgnoreAppMarker;
+	m_markerHandler[APP12] = &JFIF::HandleIgnoreAppMarker;
+	m_markerHandler[APP13] = &JFIF::HandleIgnoreAppMarker;
 	m_markerHandler[COM] = &JFIF::HandleIgnoreAppMarker;
 }
 
@@ -446,19 +448,19 @@ std::tuple<int, BYTE> JFIF::GetVLD( BitReader& bt, const HuffmanTable& huffmanTa
 
 void JFIF::DoRowIDCT( std::array<int, QUANT_TALBE_SIZE>& table )
 {
-	FormulaIDCT8x8::DoRowIDCT( table.data() );
+	FastIDCT8x8::DoRowIDCT( table.data() );
 }
 
 void JFIF::DoColIDCT( std::array<int, QUANT_TALBE_SIZE>& table )
 {
-	FormulaIDCT8x8::DoColIDCT( table.data() );
+	FastIDCT8x8::DoColIDCT( table.data() );
 }
 
 void JFIF::Convert2RGB( )
 {
 	BYTE* pColors = m_colors.data( );
 
-	for ( size_t i = 0; i < m_componentPixel[0].size( ); ++i )
+	for ( size_t i = 0, end = m_width * m_height; i < end; ++i )
 	{
 		std::tie( pColors[0], pColors[1], pColors[2] ) = YCbCr2RGB( 
 														m_componentPixel[0][i],		// Y
