@@ -49,3 +49,18 @@ TEST_CASE( "JFIF Huffman Table Parse" )
 	JFIFDebugger debuger( jfif );
 	debuger.PrintHuffmanTable( );
 }
+
+TEST_CASE( "Load All Test Image" )
+{
+	JFIF huff_simple;
+	REQUIRE( huff_simple.Load( "../Image/huff_simple.jpg" ) );
+
+	JFIF lena;
+	REQUIRE( lena.Load( "../Image/lena.jpg" ) );
+
+	JFIF test;
+	REQUIRE( test.Load( "../Image/test.jpg" ) );
+
+	JFIF uv;
+	REQUIRE( uv.Load( "../Image/uv.jpg" ) );
+}

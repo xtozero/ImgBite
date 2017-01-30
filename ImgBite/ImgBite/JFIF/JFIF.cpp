@@ -18,13 +18,27 @@ namespace
 	}
 
 	using Color = std::tuple<int, int, int>;
+	// Fast but lossy
 	Color YCbCr2RGB( int y, int cb, int cr )
 	{
-		int r = static_cast<int>( round( 1.402 * ( cr - 128 ) + y ) );
-		int g = static_cast<int>( round( -0.34414 * ( cb - 128 ) - 0.71414 * ( cr - 128 ) + y ) );
-		int b = static_cast<int>( round( 1.772 * ( cb - 128 ) + y ) );
+		y &= 0xff, cb &= 0xff, cr &= 0xff;
+		cb -= 128;
+		cr -= 128;
+
+		int r = y + ((91881 * cr) >> 16);
+		int g = y - ((22554 * cb) >> 16) - ((46802 * cr) >> 16);
+		int b = y + ((116130 * cb) >> 16);
 		return Color{ ClipColor( r ), ClipColor( g ), ClipColor( b ) };
 	}
+
+	//	https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion
+	//	Color YCbCr2RGB( int y, int cb, int cr )
+	//	{
+	//		int r = static_cast<int>(round( 1.402 * (cr - 128) + y ));
+	//		int g = static_cast<int>(round( -0.34414 * (cb - 128) - 0.71414 * (cr - 128) + y ));
+	//		int b = static_cast<int>(round( 1.772 * (cb - 128) + y ));
+	//		return Color{ ClipColor( r ), ClipColor( g ), ClipColor( b ) };
+	//	}
 };
 
 bool JFIF::Load( const char * filePath )
@@ -69,29 +83,45 @@ BYTE JFIF::ReadNextMarker( )
 
 std::streampos JFIF::FindNextMarkerPos( )
 {
+	constexpr int MAX_BUFFER = 256;
+
 	std::streampos prev = m_imgFile.tellg( );
-	std::streampos cur = prev;
-	BYTE buffer = 0;
+	std::array<BYTE, MAX_BUFFER> buffer = {};
+	bool needCheckNext = false;
+	int count = 0;
+	bool exitLoop = false;
 
-	while ( m_imgFile )
+	while ( m_imgFile && !exitLoop )
 	{
-		m_imgFile >> buffer;
-		
-		if ( buffer == 0xFF )
-		{
-			m_imgFile >> buffer;
+		m_imgFile.read( reinterpret_cast<char*>(buffer.data( )), MAX_BUFFER );
 
-			if ( buffer != 0x00 )
+		if ( needCheckNext && buffer[0] != 0x00 )
+		{
+			--count;
+			break;
+		}
+
+		for ( int i = 0; i < MAX_BUFFER - 1; ++i )
+		{
+			if ( buffer[i] == 0xFF && buffer[i + 1] != 0x00 )
 			{
-				m_imgFile.seekg( -2, std::ios::cur );
-				cur = m_imgFile.tellg( );
-				m_imgFile.seekg( prev );
+				exitLoop = true;
 				break;
 			}
+			++count;
+		}
+
+		if ( !exitLoop )
+		{
+			needCheckNext = (buffer[MAX_BUFFER - 1] == 0xFF);
+			++count;
 		}
 	}
 
-	return cur;
+	m_imgFile.clear();
+	m_imgFile.seekg( prev );
+	prev += count;
+	return prev;
 }
 
 size_t JFIF::ReadFieldLength( )
@@ -267,6 +297,11 @@ void JFIF::HandleDHTMarker( )
 				range += remain;
 				table.emplace_back( range - 1, i + 1, symbol );
 			}
+		}
+
+		if ( range < 0x10000 )
+		{
+			table.emplace_back( 0xFFFF, 0, 0 );
 		}
 	}
 }

@@ -48,7 +48,7 @@ public:
 private:
 	bool IsBufferRemain( int bits ) const noexcept
 	{
-		return ( m_curOffset + std::ceil( bits / 8 ) ) != m_length;
+		return ( m_curOffset + std::ceil( bits * 0.125 ) ) != m_length;
 	}
 
 	bool IsCacheRemain( int bits ) const noexcept
@@ -86,11 +86,10 @@ private:
 			++m_curOffset;
 		}
 
-		if ( m_cached < bits )
+		while ( m_cached < bits )
 		{
 			m_cached += 8;
 			m_cache = (m_cache << BIT_PER_BYTE) | 0xFF;
-			return;
 		}
 	}
 
