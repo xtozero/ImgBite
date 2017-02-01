@@ -15,7 +15,7 @@ public:
 	{
 	}
 
-	int ShowBit( size_t bits )
+	int ShowBit( int bits )
 	{
 		assert( bits <= ( sizeof( m_cache ) * BIT_PER_BYTE ) );
 		CacheBit( bits );
@@ -24,13 +24,13 @@ public:
 		return (m_cache >> ( m_cached - bits )) & ((0x1 << bits) - 1);
 	}
 
-	size_t SkipBit( size_t bits )
+	void SkipBit( int bits )
 	{
 		assert( bits <= (sizeof( m_cache ) * BIT_PER_BYTE) );
 		CacheBit( bits );
 
 		assert( m_cached >= bits );
-		return m_cached -= bits;
+		m_cached -= bits;
 	}
 
 	int GetBit( int bits )
@@ -46,34 +46,12 @@ public:
 	}
 
 private:
-	bool IsBufferRemain( int bits ) const noexcept
+	int CalcRequireCached( int bits ) const noexcept
 	{
-		return ( m_curOffset + std::ceil( bits * 0.125 ) ) != m_length;
+		return std::max( 0, bits - m_cached );
 	}
 
-	bool IsCacheRemain( int bits ) const noexcept
-	{
-		return ( m_cached + bits ) <= (sizeof( m_cache ) * BIT_PER_BYTE);
-	}
-
-	int CalcRequireCached( size_t bits ) const noexcept
-	{
-		int required = static_cast<int>( bits - m_cached );
-
-		if ( !IsBufferRemain( required ) )
-		{
-			return 0;
-		}
-
-		if ( !IsCacheRemain( required ) )
-		{
-			return 0;
-		}
-
-		return required;
-	}
-
-	void CacheBit( size_t bits ) noexcept
+	void CacheBit( int bits ) noexcept
 	{
 		int required = CalcRequireCached( bits );
 
@@ -96,7 +74,7 @@ private:
 	const BYTE* m_buffer = nullptr;
 	size_t m_length = 0;
 	size_t m_curOffset = 0;
-	size_t m_cached = 0;
+	int m_cached = 0;
 
 	size_t m_cache = 0;
 };

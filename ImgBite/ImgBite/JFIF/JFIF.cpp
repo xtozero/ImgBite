@@ -444,7 +444,7 @@ void JFIF::ProcessDecode( BitReader& bt, const int mcuX, const int mcuY )
 							continue;
 						}
 
-						pixel[colorIdx] = input[w >> shiftX] + 128;
+						pixel[colorIdx] = input[w >> shiftX] + 128; // Convert -128 ~ 127 to 0 ~ 255
 					}
 				}
 			}
@@ -455,12 +455,7 @@ void JFIF::ProcessDecode( BitReader& bt, const int mcuX, const int mcuY )
 std::tuple<int, BYTE> JFIF::GetVLD( BitReader& bt, const HuffmanTable& huffmanTable )
 {
 	int value = bt.ShowBit( MAX_CODE_LENGTH );
-
-	auto found = std::lower_bound( huffmanTable.begin( ), huffmanTable.end( ), value,
-		[]( const HuffmanInfo& lhs, int rhs )
-	{
-		return lhs.m_codeRange < rhs;
-	} );
+	auto found = std::lower_bound( huffmanTable.begin( ), huffmanTable.end( ), value );
 	assert( found != huffmanTable.end( ) );
 
 	bt.SkipBit( found->m_codeLength );

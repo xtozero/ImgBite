@@ -16,6 +16,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PaintTest", "PaintTest\Pain
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PerformanceTest", "PerformanceTest\PerformanceTest.vcxproj", "{33CE3AFB-5B13-41EC-B390-3A41884AC6F4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7C08CBD3-ECBC-4887-A55E-5494DAD99B4E} = {7C08CBD3-ECBC-4887-A55E-5494DAD99B4E}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

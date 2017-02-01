@@ -118,6 +118,8 @@ private:
 			m_symbol( symbol )
 		{}
 
+		template<typename T> constexpr bool operator<( T&& rhs ) const { return m_codeRange < rhs; }
+
 		int m_codeRange = 0;
 		BYTE m_codeLength = 0;
 		BYTE m_symbol = 0;

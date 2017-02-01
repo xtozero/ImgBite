@@ -196,9 +196,9 @@ void PNG::ApplyNoneFilter( const BYTE* data, size_t end )
 
 void PNG::ApplySubFilter( const BYTE* data, size_t end )
 {
-	diff_type leftIdx = GetLeftPixelIndex( );
+	std::ptrdiff_t leftIdx = GetLeftPixelIndex( );
 
-	diff_type rowStartIdx = m_colors.size( );
+	std::ptrdiff_t rowStartIdx = m_colors.size( );
 
 	for ( size_t i = 0; i < end; ++i, ++leftIdx )
 	{
@@ -210,7 +210,7 @@ void PNG::ApplySubFilter( const BYTE* data, size_t end )
 
 void PNG::ApplyUpFilter( const BYTE * data, size_t end )
 {
-	diff_type aboveIdx = GetAbovePixelIndex( );
+	std::ptrdiff_t aboveIdx = GetAbovePixelIndex( );
 
 	for ( size_t i = 0; i < end; ++i, ++aboveIdx )
 	{
@@ -222,10 +222,10 @@ void PNG::ApplyUpFilter( const BYTE * data, size_t end )
 
 void PNG::ApplyAverageFilter( const BYTE * data, size_t end )
 {
-	diff_type aboveIdx = GetAbovePixelIndex( );
-	diff_type leftIdx = GetLeftPixelIndex( );
+	std::ptrdiff_t aboveIdx = GetAbovePixelIndex( );
+	std::ptrdiff_t leftIdx = GetLeftPixelIndex( );
 
-	diff_type rowStartIdx = m_colors.size( );
+	std::ptrdiff_t rowStartIdx = m_colors.size( );
 
 	for ( size_t i = 0; i < end; ++i, ++aboveIdx, ++leftIdx )
 	{
@@ -239,11 +239,11 @@ void PNG::ApplyAverageFilter( const BYTE * data, size_t end )
 
 void PNG::ApplyPaethFilter( const BYTE * data, size_t end )
 {
-	diff_type aboveIdx = GetAbovePixelIndex( );
-	diff_type upperLeftIdx = GetUpperLeftPiexlIndex( );
-	diff_type leftIdx = GetLeftPixelIndex( );
+	std::ptrdiff_t aboveIdx = GetAbovePixelIndex( );
+	std::ptrdiff_t upperLeftIdx = GetUpperLeftPiexlIndex( );
+	std::ptrdiff_t leftIdx = GetLeftPixelIndex( );
 
-	diff_type rowStartIdx = m_colors.size( );
+	std::ptrdiff_t rowStartIdx = m_colors.size( );
 
 	for ( size_t i = 0; i < end; ++i, ++aboveIdx, ++upperLeftIdx, ++leftIdx )
 	{
