@@ -175,7 +175,7 @@ inline void FastIDCT<8>::DoIDCT1DRow( int* table )
 	// third
 	x7 = x8 + x3;
 	x8 -= x3;
-	x3 = x0 - +x2;
+	x3 = x0 + x2;
 	x0 -= x2;
 	x2 = (181 * (x4 + x5) + 128) >> 8;
 	x4 = (181 * (x4 - x5) + 128) >> 8;
@@ -228,7 +228,7 @@ inline void FastIDCT<8>::DoIDCT1DCol( int* table )
 	// third
 	x7 = x8 + x3;
 	x8 -= x3;
-	x3 = x0 - +x2;
+	x3 = x0 + x2;
 	x0 -= x2;
 	x2 = (181 * (x4 + x5) + 128) >> 8;
 	x4 = (181 * (x4 - x5) + 128) >> 8;
