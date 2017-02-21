@@ -22,6 +22,7 @@ public:
 	virtual void SetWindow( CoreWindow^ window )
 	{
 		window->Closed += ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>( this, &PaintTestApp::OnClosed );
+		window->SizeChanged += ref new TypedEventHandler<CoreWindow^, WindowSizeChangedEventArgs^>( this, &PaintTestApp::OnSizeChanged );
 	}
 
 	virtual void Load( String^ entryPoint )
@@ -56,9 +57,30 @@ private:
 		window->Activate( );
 	}
 
-	void OnClosed( CoreWindow^ CoreAppView, CoreWindowEventArgs^ Args )
+	void OnClosed( CoreWindow^ window, CoreWindowEventArgs^ Args )
 	{
 		m_windowClosed = true;
+	}
+
+	void OnSizeChanged( CoreWindow^ window, WindowSizeChangedEventArgs^ Args )
+	{
+		m_renderer.CreateResolutionDependentResources( CalcWindowPixelSize( window ) );
+	}
+
+	std::pair<UINT, UINT> CalcWindowPixelSize( CoreWindow^ window )
+	{
+		DisplayInformation^ currentDisplayInfomation = DisplayInformation::GetForCurrentView( );
+
+		auto Bound2Pixel = [dpi = currentDisplayInfomation->LogicalDpi]( float bound )
+		{
+			constexpr float dipsPerInch = 96.0f;
+			return static_cast<UINT>( floor( bound * dpi / dipsPerInch + 0.5f ) );
+		};
+
+		UINT width = Bound2Pixel( window->Bounds.Width );
+		UINT height = Bound2Pixel( window->Bounds.Width );
+
+		return std::make_pair( width, height );
 	}
 
 	CD3D12Renderer m_renderer;
