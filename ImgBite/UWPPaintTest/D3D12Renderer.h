@@ -11,16 +11,20 @@ using ComPtr = Microsoft::WRL::ComPtr<T>;
 class CD3D12Renderer
 {
 public:
-	bool OnInitialize( );
+	bool OnInitialize( const std::pair<UINT, UINT>& resolution );
 	void OnDestory( );
 	void OnRender( );
 
 	bool CreateDeviceDependentResources( );
-	bool CreateResolutionDependentResources( const std::pair<UINT, UINT>& resolution = {} );
+	bool CreateResolutionDependentResources( const std::pair<UINT, UINT>& resolution );
 
 private:
 	void WaitForNextFrame( );
 	void WaitForGPU( );
+
+	bool CreateAssets( );
+
+	ComPtr<ID3D10Blob> CompileShader( std::wstring fileName, std::string entryPoint, std::string profile );
 
 	ComPtr<ID3D12Device> m_device;
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
@@ -45,7 +49,11 @@ private:
 	RECT m_windowRect = {};
 	D3D12_VIEWPORT m_viewport = {};
 
-	D3D12_VERTEX_BUFFER_VIEW m_bufferView = {};
+	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView = {};
 	ComPtr<ID3D12Resource> m_vertexBuffer;
+
+	ComPtr<ID3D12Resource> m_shaderResource;
+	ComPtr<ID3D12DescriptorHeap> m_shaderResourceView;
+	ComPtr<ID3D12DescriptorHeap> m_sampler;
 };
 

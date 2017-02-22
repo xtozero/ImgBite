@@ -32,7 +32,7 @@ public:
 
 	virtual void Run( )
 	{
-		m_renderer.OnInitialize( );
+		m_renderer.OnInitialize( CalcWindowPixelSize( CoreWindow::GetForCurrentThread() ) );
 
 		CoreWindow^ window = CoreWindow::GetForCurrentThread( );
 
@@ -78,7 +78,7 @@ private:
 		};
 
 		UINT width = Bound2Pixel( window->Bounds.Width );
-		UINT height = Bound2Pixel( window->Bounds.Width );
+		UINT height = Bound2Pixel( window->Bounds.Height );
 
 		return std::make_pair( width, height );
 	}

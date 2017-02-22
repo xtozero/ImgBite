@@ -1,25 +1,61 @@
 #include "pch.h"
 #include "D3D12Renderer.h"
 
+#include "../ImgBite/PNG/PNG.h"
+
 #include "RendererUtils.hpp"
 
-bool CD3D12Renderer::OnInitialize( )
+#include "VertexDefines.h"
+
+#include <d3dcompiler.h>
+#include <string>
+
+#pragma comment( lib, "ImgBite.lib" )
+
+bool CD3D12Renderer::OnInitialize( const std::pair<UINT, UINT>& resolution )
 {
 	if ( !CreateDeviceDependentResources( ) )
 	{
 		return false;
 	}
 
-	if ( !CreateResolutionDependentResources( ) )
+	if ( !CreateResolutionDependentResources( resolution ) )
+	{
+		return false;
+	}
+
+	if ( !CreateAssets() )
 	{
 		return false;
 	}
 
 	{
+		D3D12_DESCRIPTOR_RANGE descRanges[2] = {};
+
+		descRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descRanges[0].NumDescriptors = 1;
+		descRanges[0].BaseShaderRegister = 0;
+		descRanges[0].RegisterSpace = 0;
+		descRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+		descRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+		descRanges[0].NumDescriptors = 1;
+		descRanges[0].BaseShaderRegister = 0;
+		descRanges[0].RegisterSpace = 0;
+		descRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+		D3D12_ROOT_PARAMETER rootParam = {};
+		rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParam.DescriptorTable.NumDescriptorRanges = _countof( descRanges );
+		rootParam.DescriptorTable.pDescriptorRanges = descRanges;
+		rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
 		ComPtr<ID3D10Blob> signature;
 		
 		D3D12_ROOT_SIGNATURE_DESC signatureDesc = {};
 		signatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+		signatureDesc.NumParameters = 1;
+		signatureDesc.pParameters = &rootParam;
 
 		if ( !CallComFunc( D3D12SerializeRootSignature, &signatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr ) )
 		{
@@ -31,9 +67,97 @@ bool CD3D12Renderer::OnInitialize( )
 			return false;
 		}
 
-		D3D12_INPUT_ELEMENT_DESC inputElements[] = {
-			{},
-			{} };
+		ComPtr<ID3D10Blob> vs = CompileShader( GetFullPath( L"RectShader.fx" ), "vsMain", "vs_5_0" );
+		ComPtr<ID3D10Blob> ps = CompileShader( GetFullPath( L"RectShader.fx" ), "psMain", "ps_5_0" );
+
+		std::array<D3D12_INPUT_ELEMENT_DESC, 2> inputElements = CDX12Vertex::GetInputDesc( );
+
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc = {};
+		pipelineDesc.pRootSignature = m_rootSignature.Get( );
+		pipelineDesc.VS.pShaderBytecode = vs->GetBufferPointer( );
+		pipelineDesc.VS.BytecodeLength = vs->GetBufferSize( );
+		pipelineDesc.PS.pShaderBytecode = ps->GetBufferPointer( );
+		pipelineDesc.PS.BytecodeLength = ps->GetBufferSize( );
+		pipelineDesc.BlendState.AlphaToCoverageEnable = false;
+		pipelineDesc.BlendState.IndependentBlendEnable = false;
+		pipelineDesc.BlendState.RenderTarget[0].BlendEnable = false;
+		pipelineDesc.BlendState.RenderTarget[0].LogicOpEnable = false;
+		pipelineDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+		pipelineDesc.SampleMask = 0xFFFFFFFF;
+		pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+		pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+		pipelineDesc.DepthStencilState.DepthEnable = false;
+		pipelineDesc.DepthStencilState.StencilEnable = false;
+		pipelineDesc.InputLayout.NumElements = static_cast<UINT>( inputElements.size() );
+		pipelineDesc.InputLayout.pInputElementDescs = inputElements.data();
+		pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		pipelineDesc.NumRenderTargets = 1;
+		pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+		pipelineDesc.SampleDesc.Count = 1;
+		pipelineDesc.SampleDesc.Quality = 0;
+		pipelineDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+
+		if ( !CallComFunc( &ID3D12Device::CreateGraphicsPipelineState, m_device, &pipelineDesc, IID_PPV_ARGS( &m_pipelineState ) ) )
+		{
+			return false;
+		}
+
+		CDX12Vertex vertices[] = {
+			{ { 1.f, 1.f, 0.f }, { 1.f, 0.f } },
+			{ { 1.f, -1.f, 0.f }, { 0.f, 1.f } },
+			{ { -1.f, 1.f, 0.f }, { 0.f, 0.f } },
+
+			{ { -1.f, -1.f, 0.f }, { 0.f, 1.f } },
+			{ { -1.f, 1.f, 0.f }, { 0.f, 0.f } },
+			{ { 1.f, -1.f, 0.f }, { 1.f, 1.f } },
+		};
+
+		D3D12_HEAP_PROPERTIES heapProperty = {};
+		heapProperty.Type = D3D12_HEAP_TYPE_UPLOAD;
+		heapProperty.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		heapProperty.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+		heapProperty.VisibleNodeMask = 1;
+		heapProperty.CreationNodeMask = 1;
+
+		D3D12_RESOURCE_DESC rsrcDesc = {};
+		rsrcDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		rsrcDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+		rsrcDesc.Width = sizeof( vertices );
+		rsrcDesc.Height = 1;
+		rsrcDesc.DepthOrArraySize = 1;
+		rsrcDesc.MipLevels = 1;
+		rsrcDesc.Format = DXGI_FORMAT_UNKNOWN;
+		rsrcDesc.SampleDesc.Count = 1;
+		rsrcDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		rsrcDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+		if ( !CallComFunc( &ID3D12Device::CreateCommittedResource,
+							m_device,
+							&heapProperty,
+							D3D12_HEAP_FLAG_NONE,
+							&rsrcDesc,
+							D3D12_RESOURCE_STATE_GENERIC_READ,
+							nullptr,
+							IID_PPV_ARGS( &m_vertexBuffer ) ) )
+		{
+			return false;
+		}
+
+		D3D12_RANGE range = { 0, 0 };
+		void* pData = nullptr;
+
+		if ( !CallComFunc( &ID3D12Resource::Map, m_vertexBuffer, 0, &range, &pData ) )
+		{
+			return false;
+		}
+		memcpy( pData, static_cast<void*>(vertices), sizeof( vertices ) );
+		m_vertexBuffer->Unmap( 0, nullptr );
+
+		m_vertexBufferView.StrideInBytes = sizeof( CDX12Vertex );
+		m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+		m_vertexBufferView.SizeInBytes = sizeof( vertices );
+
+		WaitForGPU( );
 	}
 
 	return true;
@@ -54,7 +178,7 @@ void CD3D12Renderer::OnRender( )
 		return;
 	}
 
-	if ( !CallComFunc( &ID3D12GraphicsCommandList::Reset, m_commandList[m_curBufferIdx], m_commandAlloc[m_curBufferIdx].Get( ), nullptr ) )
+	if ( !CallComFunc( &ID3D12GraphicsCommandList::Reset, m_commandList[m_curBufferIdx], m_commandAlloc[m_curBufferIdx].Get( ), m_pipelineState.Get() ) )
 	{
 		return;
 	}
@@ -70,8 +194,20 @@ void CD3D12Renderer::OnRender( )
 	rtvBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	rtvBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
+	m_commandList[m_curBufferIdx]->ResourceBarrier( 1, &rtvBarrier );
+
+	m_commandList[m_curBufferIdx]->SetGraphicsRootSignature( m_rootSignature.Get( ) );
+	m_commandList[m_curBufferIdx]->OMSetRenderTargets( 1, &rtvHandle, false, nullptr );
+
 	float color[4] = { 1.f, 0.f, 0.f, 0.f };
 	m_commandList[m_curBufferIdx]->ClearRenderTargetView( rtvHandle, color, 0, nullptr );
+	m_commandList[m_curBufferIdx]->IASetPrimitiveTopology( D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+	m_commandList[m_curBufferIdx]->IASetVertexBuffers( 0, 1, &m_vertexBufferView );
+
+	m_commandList[m_curBufferIdx]->RSSetViewports( 1, &m_viewport );
+	m_commandList[m_curBufferIdx]->RSSetScissorRects( 1, &m_windowRect );
+
+	m_commandList[m_curBufferIdx]->DrawInstanced( 6, 1, 0, 0 );
 
 	D3D12_RESOURCE_BARRIER presentBarrier = {};
 	presentBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -80,6 +216,8 @@ void CD3D12Renderer::OnRender( )
 	presentBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	presentBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 	presentBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+	m_commandList[m_curBufferIdx]->ResourceBarrier( 1, &presentBarrier );
 
 	if ( !CallComFunc( &ID3D12GraphicsCommandList::Close, m_commandList[m_curBufferIdx] ) )
 	{
@@ -144,10 +282,10 @@ bool CD3D12Renderer::CreateDeviceDependentResources( )
 			return false;
 		}
 
-		if ( !CallComFunc( &ID3D12GraphicsCommandList::Close, m_commandList[i] ) )
-		{
-			return false;
-		}
+		//if ( !CallComFunc( &ID3D12GraphicsCommandList::Close, m_commandList[i] ) )
+		//{
+		//	return false;
+		//}
 	}
 
 	D3D12_DESCRIPTOR_HEAP_DESC rtvheapDesc = {};
@@ -224,6 +362,9 @@ bool CD3D12Renderer::CreateResolutionDependentResources( const std::pair<UINT, U
 		rtvHandle.ptr += m_rtvViewSize;
 	}
 
+	m_windowRect = { 0L, 0L, static_cast<long>( resolution.first ), static_cast<long>( resolution.second ) };
+	m_viewport = { 0.f, 0.f, static_cast<float>( resolution.first ), static_cast<float>( resolution.second ), 0.f, 1.0f };
+
 	return true;
 }
 
@@ -263,4 +404,145 @@ void CD3D12Renderer::WaitForGPU( )
 	WaitForSingleObject( m_fenceEvent, INFINITE );
 
 	++m_fenceValue[m_curBufferIdx];
+}
+
+bool CD3D12Renderer::CreateAssets( )
+{
+	PNG testPng;
+	if ( !testPng.Load( GetFullPath( "lena.png" ).c_str( ) ) )
+	{
+		return false;
+	}
+
+	D3D12_HEAP_PROPERTIES heapProperty = {};
+	heapProperty.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	heapProperty.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	heapProperty.CreationNodeMask = 1;
+	heapProperty.VisibleNodeMask = 1;
+	heapProperty.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+	D3D12_RESOURCE_DESC rsrcDesc = {};
+	rsrcDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	rsrcDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+	rsrcDesc.Width = testPng.GetWidth();
+	rsrcDesc.Height = testPng.GetHeight();
+	rsrcDesc.DepthOrArraySize = 1;
+	rsrcDesc.MipLevels = 1;
+	rsrcDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	rsrcDesc.SampleDesc.Count = 1;
+	rsrcDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	rsrcDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	if ( !CallComFunc( &ID3D12Device::CreateCommittedResource,
+		m_device,
+		&heapProperty,
+		D3D12_HEAP_FLAG_NONE,
+		&rsrcDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		nullptr,
+		IID_PPV_ARGS( &m_shaderResource ) ) )
+	{
+		return false;
+	}
+
+	heapProperty.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	rsrcDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	rsrcDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+	rsrcDesc.Width = GetRequiredIntermediateSize( m_shaderResource.Get(), 0, 1 );
+	rsrcDesc.Height = 1;
+	rsrcDesc.DepthOrArraySize = 1;
+	rsrcDesc.MipLevels = 1;
+	rsrcDesc.Format = DXGI_FORMAT_UNKNOWN;
+	rsrcDesc.SampleDesc.Count = 1;
+	rsrcDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	rsrcDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	ComPtr<ID3D12Resource> buffer;
+
+	if ( !CallComFunc( &ID3D12Device::CreateCommittedResource,
+		m_device,
+		&heapProperty,
+		D3D12_HEAP_FLAG_NONE,
+		&rsrcDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS( &buffer ) ) )
+	{
+		return false;
+	}
+
+	std::vector<unsigned char> texture;
+	texture.resize( testPng.GetWidth( ) * testPng.GetHeight() * 4 );
+	const BYTE* pSrc = testPng.GetByteStream( ).data();
+
+	for ( int i = 0; i < texture.size( ); ++i )
+	{
+		texture[i] = *pSrc;
+		texture[++i] = *(++pSrc);
+		texture[++i] = *(++pSrc);
+		texture[++i] = 0xFF;
+	}
+
+	D3D12_SUBRESOURCE_DATA textureData = {};
+	textureData.pData = texture.data( );
+	textureData.RowPitch = 4 * testPng.GetWidth( );
+	textureData.SlicePitch = textureData.RowPitch * testPng.GetHeight( );
+
+	UpdateSubresource( m_commandList[m_curBufferIdx].Get( ),
+						m_shaderResource.Get( ),
+						buffer.Get( ),
+						0,
+						0,
+						1,
+						&textureData );
+
+	D3D12_RESOURCE_BARRIER srBarrier = {};
+	srBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	srBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	srBarrier.Transition.pResource = m_shaderResource.Get( );
+	srBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+	srBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	srBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+	m_commandList[m_curBufferIdx]->ResourceBarrier( 1, &srBarrier );
+
+	if ( !CallComFunc( &ID3D12GraphicsCommandList::Close, m_commandList[m_curBufferIdx] ) )
+	{
+		return false;
+	}
+
+	ID3D12CommandList* commandList[] = { m_commandList[m_curBufferIdx].Get( ) };
+	m_commandQueue->ExecuteCommandLists( 1, commandList );
+
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.NumDescriptors = 1;
+	srvHeapDesc.NodeMask = 0;
+
+	if ( !CallComFunc( &ID3D12Device::CreateDescriptorHeap, m_device, &srvHeapDesc, IID_PPV_ARGS( &m_shaderResourceView ) ) )
+	{
+		return false;
+	}
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	m_device->CreateShaderResourceView( m_shaderResource.Get( ), &srvDesc, m_shaderResourceView->GetCPUDescriptorHandleForHeapStart( ) );
+
+	WaitForGPU( );
+	return true;
+}
+
+ComPtr<ID3D10Blob> CD3D12Renderer::CompileShader( std::wstring fileName, std::string entryPoint, std::string profile )
+{
+	ComPtr<ID3D10Blob> byteCode;
+
+	CallComFunc( &D3DCompileFromFile, fileName.c_str( ), nullptr, nullptr, entryPoint.c_str( ), profile.c_str( ), 0, 0, &byteCode, nullptr );
+
+	return byteCode;
 }

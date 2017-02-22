@@ -101,21 +101,27 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <LibraryPath>../Lib/x86;../zlib/lib/x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <LibraryPath>../Lib/x86;../zlib/lib/x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <OutDir>$(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <LibraryPath>../Lib/x86;../zlib/lib/x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <OutDir>$(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <LibraryPath>../Lib/x86;../zlib/lib/x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <LibraryPath>../Lib/x64;../zlib/lib/x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\</OutDir>
+    <LibraryPath>../Lib/x64;../zlib/lib/x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
@@ -163,6 +169,7 @@
     <ClInclude Include="D3D12Renderer.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RendererUtils.hpp" />
+    <ClInclude Include="VertexDefines.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

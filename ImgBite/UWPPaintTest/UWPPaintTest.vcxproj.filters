@@ -27,6 +27,9 @@
     <ClInclude Include="RendererUtils.hpp">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="VertexDefines.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">
