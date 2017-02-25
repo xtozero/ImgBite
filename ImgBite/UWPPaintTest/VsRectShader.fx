@@ -19,8 +19,3 @@ VERTEX_OUTPUT vsMain( VERTEX_INPUT input )
 
 	return output;
 }
-
-float4 psMain( VERTEX_OUTPUT input ) : SV_TARGET
-{
-	return float4(0.f, 0.0f, 1.f, 1.0f);
-}

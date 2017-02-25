@@ -129,6 +129,13 @@
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>mkdir $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX
+copy /Y  $(SolutionDir)Image\lena.png $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\lena.png
+copy /Y  $(SolutionDir)UWPPaintTest\PsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\PsRectShader.fx
+copy /Y  $(SolutionDir)UWPPaintTest\VsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\VsRectShader.fx
+copy /Y  $(SolutionDir)Lib\x86\zlib1.dll $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\zlib1.dll</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
@@ -136,6 +143,13 @@
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>mkdir $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX
+copy /Y  $(SolutionDir)Image\lena.png $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\lena.png
+copy /Y  $(SolutionDir)UWPPaintTest\PsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\PsRectShader.fx
+copy /Y  $(SolutionDir)UWPPaintTest\VsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\VsRectShader.fx
+copy /Y  $(SolutionDir)Lib\x86\zlib1.dll $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\zlib1.dll</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -143,6 +157,13 @@
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>mkdir $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX
+copy /Y  $(SolutionDir)Image\lena.png $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\lena.png
+copy /Y  $(SolutionDir)UWPPaintTest\PsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\PsRectShader.fx
+copy /Y  $(SolutionDir)UWPPaintTest\VsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\VsRectShader.fx
+copy /Y  $(SolutionDir)Lib\x86\zlib1.dll $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\zlib1.dll</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -150,6 +171,13 @@
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>mkdir $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX
+copy /Y  $(SolutionDir)Image\lena.png $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\lena.png
+copy /Y  $(SolutionDir)UWPPaintTest\PsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\PsRectShader.fx
+copy /Y  $(SolutionDir)UWPPaintTest\VsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\VsRectShader.fx
+copy /Y  $(SolutionDir)Lib\x86\zlib1.dll $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\zlib1.dll</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -157,6 +185,13 @@
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>mkdir $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX
+copy /Y  $(SolutionDir)Image\lena.png $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\lena.png
+copy /Y  $(SolutionDir)UWPPaintTest\PsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\PsRectShader.fx
+copy /Y  $(SolutionDir)UWPPaintTest\VsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\VsRectShader.fx
+copy /Y  $(SolutionDir)Lib\x64\zlibwapi.dll $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\zlibwapi.dll</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -164,6 +199,13 @@
       <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>mkdir $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX
+copy /Y  $(SolutionDir)Image\lena.png $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\lena.png
+copy /Y  $(SolutionDir)UWPPaintTest\PsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\PsRectShader.fx
+copy /Y  $(SolutionDir)UWPPaintTest\VsRectShader.fx $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\VsRectShader.fx
+copy /Y  $(SolutionDir)Lib\x64\zlibwapi.dll $(SolutionDir)Executable\$(Configuration)\$(MSBuildProjectName)\AppX\zlibwapi.dll</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="D3D12Renderer.h" />

@@ -174,7 +174,7 @@ UINT64 UpdateSubresource( ID3D12GraphicsCommandList* pCmdList, ID3D12Resource* p
 	{
 		ComPtr<ID3D12Device> pDevice;
 		pDestResource->GetDevice( IID_PPV_ARGS( &pDevice ) );
-		pDevice->GetCopyableFootprints( &desc, FirstSubresource, NumSubresources, 0, nullptr, nullptr, nullptr, &requiredSize );
+		pDevice->GetCopyableFootprints( &desc, FirstSubresource, NumSubresources, IntermediateOffset, pLayouts, pNumRows, pRowSizesInBytes, &requiredSize );
 	}
 
 	UINT64 result = UpdateSubresource( pCmdList, pDestResource, pIntermediate, FirstSubresource, NumSubresources, requiredSize, pLayouts, pNumRows, pRowSizesInBytes, pSrcData );

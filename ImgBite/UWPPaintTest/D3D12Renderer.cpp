@@ -24,11 +24,6 @@ bool CD3D12Renderer::OnInitialize( const std::pair<UINT, UINT>& resolution )
 		return false;
 	}
 
-	if ( !CreateAssets() )
-	{
-		return false;
-	}
-
 	{
 		D3D12_DESCRIPTOR_RANGE descRanges[2] = {};
 
@@ -38,24 +33,29 @@ bool CD3D12Renderer::OnInitialize( const std::pair<UINT, UINT>& resolution )
 		descRanges[0].RegisterSpace = 0;
 		descRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-		descRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-		descRanges[0].NumDescriptors = 1;
-		descRanges[0].BaseShaderRegister = 0;
-		descRanges[0].RegisterSpace = 0;
-		descRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		descRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+		descRanges[1].NumDescriptors = 1;
+		descRanges[1].BaseShaderRegister = 0;
+		descRanges[1].RegisterSpace = 0;
+		descRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-		D3D12_ROOT_PARAMETER rootParam = {};
-		rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		rootParam.DescriptorTable.NumDescriptorRanges = _countof( descRanges );
-		rootParam.DescriptorTable.pDescriptorRanges = descRanges;
-		rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		D3D12_ROOT_PARAMETER rootParam[2] = {};
+		rootParam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParam[0].DescriptorTable.NumDescriptorRanges = 1;
+		rootParam[0].DescriptorTable.pDescriptorRanges = &descRanges[0];
+		rootParam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		rootParam[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParam[1].DescriptorTable.NumDescriptorRanges = 1;
+		rootParam[1].DescriptorTable.pDescriptorRanges = &descRanges[1];
+		rootParam[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 		ComPtr<ID3D10Blob> signature;
-		
+
 		D3D12_ROOT_SIGNATURE_DESC signatureDesc = {};
 		signatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-		signatureDesc.NumParameters = 1;
-		signatureDesc.pParameters = &rootParam;
+		signatureDesc.NumParameters = _countof( rootParam );
+		signatureDesc.pParameters = rootParam;
 
 		if ( !CallComFunc( D3D12SerializeRootSignature, &signatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr ) )
 		{
@@ -67,8 +67,8 @@ bool CD3D12Renderer::OnInitialize( const std::pair<UINT, UINT>& resolution )
 			return false;
 		}
 
-		ComPtr<ID3D10Blob> vs = CompileShader( GetFullPath( L"RectShader.fx" ), "vsMain", "vs_5_0" );
-		ComPtr<ID3D10Blob> ps = CompileShader( GetFullPath( L"RectShader.fx" ), "psMain", "ps_5_0" );
+		ComPtr<ID3D10Blob> vs = CompileShader( GetFullPath( L"VsRectShader.fx" ), "vsMain", "vs_5_0" );
+		ComPtr<ID3D10Blob> ps = CompileShader( GetFullPath( L"PsRectShader.fx" ), "psMain", "ps_5_0" );
 
 		std::array<D3D12_INPUT_ELEMENT_DESC, 2> inputElements = CDX12Vertex::GetInputDesc( );
 
@@ -104,7 +104,7 @@ bool CD3D12Renderer::OnInitialize( const std::pair<UINT, UINT>& resolution )
 
 		CDX12Vertex vertices[] = {
 			{ { 1.f, 1.f, 0.f }, { 1.f, 0.f } },
-			{ { 1.f, -1.f, 0.f }, { 0.f, 1.f } },
+			{ { 1.f, -1.f, 0.f }, { 1.f, 1.f } },
 			{ { -1.f, 1.f, 0.f }, { 0.f, 0.f } },
 
 			{ { -1.f, -1.f, 0.f }, { 0.f, 1.f } },
@@ -156,9 +156,14 @@ bool CD3D12Renderer::OnInitialize( const std::pair<UINT, UINT>& resolution )
 		m_vertexBufferView.StrideInBytes = sizeof( CDX12Vertex );
 		m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 		m_vertexBufferView.SizeInBytes = sizeof( vertices );
-
-		WaitForGPU( );
 	}
+
+	if ( !CreateAssets( ) )
+	{
+		return false;
+	}
+
+	WaitForGPU( );
 
 	return true;
 }
@@ -197,6 +202,13 @@ void CD3D12Renderer::OnRender( )
 	m_commandList[m_curBufferIdx]->ResourceBarrier( 1, &rtvBarrier );
 
 	m_commandList[m_curBufferIdx]->SetGraphicsRootSignature( m_rootSignature.Get( ) );
+	m_commandList[m_curBufferIdx]->SetPipelineState( m_pipelineState.Get( ) );
+
+	ID3D12DescriptorHeap* ppHeaps[] = { m_shaderResourceView.Get( ), m_sampler.Get( ) };
+	m_commandList[m_curBufferIdx]->SetDescriptorHeaps( _countof( ppHeaps ), ppHeaps );
+	m_commandList[m_curBufferIdx]->SetGraphicsRootDescriptorTable( 0, m_shaderResourceView->GetGPUDescriptorHandleForHeapStart( ) );
+	m_commandList[m_curBufferIdx]->SetGraphicsRootDescriptorTable( 1, m_sampler->GetGPUDescriptorHandleForHeapStart( ) );
+
 	m_commandList[m_curBufferIdx]->OMSetRenderTargets( 1, &rtvHandle, false, nullptr );
 
 	float color[4] = { 1.f, 0.f, 0.f, 0.f };
@@ -282,10 +294,10 @@ bool CD3D12Renderer::CreateDeviceDependentResources( )
 			return false;
 		}
 
-		//if ( !CallComFunc( &ID3D12GraphicsCommandList::Close, m_commandList[i] ) )
-		//{
-		//	return false;
-		//}
+		if ( !CallComFunc( &ID3D12GraphicsCommandList::Close, m_commandList[i] ) )
+		{
+			return false;
+		}
 	}
 
 	D3D12_DESCRIPTOR_HEAP_DESC rtvheapDesc = {};
@@ -392,7 +404,7 @@ void CD3D12Renderer::WaitForNextFrame( )
 
 void CD3D12Renderer::WaitForGPU( )
 {
-	if ( !CallComFunc( &ID3D12CommandQueue::Signal, m_commandQueue, m_fence.Get( ), m_fenceValue[m_curBufferIdx] ) )
+ 	if ( !CallComFunc( &ID3D12CommandQueue::Signal, m_commandQueue, m_fence.Get( ), m_fenceValue[m_curBufferIdx] ) )
 	{
 		return;
 	}
@@ -474,20 +486,30 @@ bool CD3D12Renderer::CreateAssets( )
 
 	std::vector<unsigned char> texture;
 	texture.resize( testPng.GetWidth( ) * testPng.GetHeight() * 4 );
-	const BYTE* pSrc = testPng.GetByteStream( ).data();
+	const std::vector<unsigned char>& colors = testPng.GetByteStream( );
 
-	for ( int i = 0; i < texture.size( ); ++i )
+	for ( int i = 0, j = -1; i < texture.size( ); i += 4 )
 	{
-		texture[i] = *pSrc;
-		texture[++i] = *(++pSrc);
-		texture[++i] = *(++pSrc);
-		texture[++i] = 0xFF;
+		texture[i] = colors[++j];
+		texture[i + 1] = colors[++j];
+		texture[i + 2] = colors[++j];
+		texture[i + 3] = 0xFF;
 	}
 
 	D3D12_SUBRESOURCE_DATA textureData = {};
 	textureData.pData = texture.data( );
 	textureData.RowPitch = 4 * testPng.GetWidth( );
 	textureData.SlicePitch = textureData.RowPitch * testPng.GetHeight( );
+
+	if ( !CallComFunc( &ID3D12CommandAllocator::Reset, m_commandAlloc[m_curBufferIdx] ) )
+	{
+		return false;
+	}
+
+	if ( !CallComFunc( &ID3D12GraphicsCommandList::Reset, m_commandList[m_curBufferIdx], m_commandAlloc[m_curBufferIdx].Get( ), m_pipelineState.Get( ) ) )
+	{
+		return false;
+	}
 
 	UpdateSubresource( m_commandList[m_curBufferIdx].Get( ),
 						m_shaderResource.Get( ),
@@ -516,7 +538,7 @@ bool CD3D12Renderer::CreateAssets( )
 	m_commandQueue->ExecuteCommandLists( 1, commandList );
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.NumDescriptors = 1;
 	srvHeapDesc.NodeMask = 0;
@@ -533,6 +555,35 @@ bool CD3D12Renderer::CreateAssets( )
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	m_device->CreateShaderResourceView( m_shaderResource.Get( ), &srvDesc, m_shaderResourceView->GetCPUDescriptorHandleForHeapStart( ) );
+
+	D3D12_DESCRIPTOR_HEAP_DESC samplerHeapDesc = {};
+	samplerHeapDesc.NumDescriptors = 1;
+	samplerHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+	samplerHeapDesc.NodeMask = 0;
+	samplerHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	if ( !CallComFunc( &ID3D12Device::CreateDescriptorHeap, m_device, &samplerHeapDesc, IID_PPV_ARGS( &m_sampler ) ) )
+	{
+		return false;
+	}
+
+	D3D12_CPU_DESCRIPTOR_HANDLE samperHandle = m_sampler->GetCPUDescriptorHandleForHeapStart( );
+	D3D12_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.BorderColor[0] = 1.f;
+	samplerDesc.BorderColor[1] = 1.f;
+	samplerDesc.BorderColor[2] = 1.f;
+	samplerDesc.BorderColor[3] = 1.f;
+	samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.MaxAnisotropy = 0;
+	samplerDesc.MaxLOD = FLT_MAX;
+	samplerDesc.MinLOD = -FLT_MAX;
+	samplerDesc.MipLODBias = 0.f;
+
+	m_device->CreateSampler( &samplerDesc, samperHandle );
 
 	WaitForGPU( );
 	return true;
