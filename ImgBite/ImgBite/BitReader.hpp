@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <algorithm>
 
 using BYTE = unsigned char;
 

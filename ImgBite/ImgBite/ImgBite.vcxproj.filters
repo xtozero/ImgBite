@@ -19,6 +19,9 @@
     <Filter Include="JFIF">
       <UniqueIdentifier>{021f2c13-6e59-480f-bd6f-341084b8064d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NETPBM">
+      <UniqueIdentifier>{842a7ddd-bb8d-42d3-bd0a-6536904c823f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -51,6 +54,9 @@
     <ClInclude Include="DCT.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NETPBM\NETPBM.h">
+      <Filter>NETPBM</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -64,6 +70,9 @@
     </ClCompile>
     <ClCompile Include="JFIF\JFIFDebugger.cpp">
       <Filter>JFIF</Filter>
+    </ClCompile>
+    <ClCompile Include="NETPBM\NETPBM.cpp">
+      <Filter>NETPBM</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
