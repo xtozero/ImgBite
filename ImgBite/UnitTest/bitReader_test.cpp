@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "Catch/include/catch.hpp"
 
 #include "../ImgBite/BitReader.hpp"
 
