@@ -25,5 +25,31 @@ TEST_CASE( "Read Portable BitMap" )
 
 	REQUIRE( netpbm.GetBytePerChannel( ) == 1 );
 	REQUIRE( netpbm.GetBytePerPixel( ) == 1 );
+	REQUIRE( netpbm.GetChannelDepth( ) == 1 );
+}
+
+TEST_CASE( "Read Portable GrayMap" )
+{
+	NETPBM netpbm;
+	REQUIRE( netpbm.Load( "../Image/NETPBM/elephant.pgm" ) );
+
+	REQUIRE( netpbm.GetWidth( ) == 512 );
+	REQUIRE( netpbm.GetHeight( ) == 512 );
+
+	REQUIRE( netpbm.GetBytePerChannel( ) == 1 );
+	REQUIRE( netpbm.GetBytePerPixel( ) == 1 );
+	REQUIRE( netpbm.GetChannelDepth( ) == 8 );
+}
+
+TEST_CASE( "Read Portable PixMap" )
+{
+	NETPBM netpbm;
+	REQUIRE( netpbm.Load( "../Image/NETPBM/elephant.ppm" ) );
+
+	REQUIRE( netpbm.GetWidth( ) == 512 );
+	REQUIRE( netpbm.GetHeight( ) == 512 );
+
+	REQUIRE( netpbm.GetBytePerChannel( ) == 1 );
+	REQUIRE( netpbm.GetBytePerPixel( ) == 3 );
 	REQUIRE( netpbm.GetChannelDepth( ) == 8 );
 }

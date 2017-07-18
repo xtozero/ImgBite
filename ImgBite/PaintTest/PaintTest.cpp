@@ -6,6 +6,9 @@
 
 #include "../ImgBite/JFIF/JFIF.h"
 #include "../ImgBite/PNG/PNG.h"
+#include "../ImgBite/NETPBM/NETPBM.h"
+
+#include "Window/Window.h"
 
 #pragma comment( lib, "ImgBite.lib" )
 
@@ -16,14 +19,70 @@ HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 
+enum
+{
+	DRAW_PNG = 0,
+	DRAW_JPG,
+	DRAW_PBM,
+	DRAW_PGM,
+	DRAW_PPM,
+};
+
+int curDrawImage = DRAW_PNG;
+
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
-PNG testPng;
-JFIF testJFIF;
+using Monochrome = std::integral_constant<int, 1>;
+using Polychrome = std::integral_constant<int, 3>;
+
+template <typename IMG>
+void LoadAndRenderImage( HDC hdc, const char* filePath, Monochrome )
+{
+	IMG image;
+	image.Load( filePath );
+
+	unsigned int width = image.GetWidth( );
+	unsigned int height = image.GetHeight( );
+	unsigned char bpp = image.GetBytePerPixel( );
+
+	const std::vector<unsigned char>& colors = image.GetByteStream( );
+
+	for ( unsigned int i = 0; i < height; ++i )
+	{
+		size_t pos = ( i * width * bpp );
+		for ( unsigned int j = 0; j < width; ++j )
+		{
+			SetPixel( hdc, j, i, RGB( colors[pos], colors[pos], colors[pos] ) );
+			++pos;
+		}
+	}
+}
+
+template <typename IMG>
+void LoadAndRenderImage( HDC hdc, const char* filePath, Polychrome )
+{
+	IMG image;
+	image.Load( filePath );
+
+	unsigned int width = image.GetWidth( );
+	unsigned int height = image.GetHeight( );
+	unsigned char bpp = image.GetBytePerPixel( );
+
+	const std::vector<unsigned char>& colors = image.GetByteStream( );
+
+	for ( unsigned int i = 0; i < height; ++i )
+	{
+		size_t pos = ( i * width * bpp );
+		for ( unsigned int j = 0; j < width; ++j )
+		{
+			SetPixel( hdc, j, i, RGB( colors[pos++], colors[pos++], colors[pos++] ) );
+		}
+	}
+}
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -38,10 +97,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_PAINTTEST, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
+    
+
+	CWindowSetup setup( hInstance, 512, 512 );
+	Window window( szTitle );
 
     // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
+    if (!window.Run( setup, WndProc ))
     {
         return FALSE;
     }
@@ -63,62 +125,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int) msg.wParam;
 }
 
-
-
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
-    WNDCLASSEXW wcex;
-
-    wcex.cbSize = sizeof(WNDCLASSEX);
-
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PAINTTEST));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_PAINTTEST);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    return RegisterClassExW(&wcex);
-}
-
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   hInst = hInstance; // Store instance handle in our global variable
-
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, 1035, 570, nullptr, nullptr, hInstance, nullptr);
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -134,10 +140,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
 	case WM_CREATE:
-		{
-			testPng.Load( "../Image/lena.png" );
-			testJFIF.Load( "../Image/lena.jpg" );
-		}
 		break;
     case WM_COMMAND:
         {
@@ -161,56 +163,55 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
 
-			// Draw jpeg
-			{ 
-				unsigned int width = testJFIF.GetWidth( );
-				unsigned int height = testJFIF.GetHeight( );
-				unsigned char bpp = testJFIF.GetBytePerPixel( );
-
-				const std::vector<unsigned char>& colors = testJFIF.GetByteStream( );
-
-				for ( unsigned int i = 0; i < height; ++i )
-				{
-					for ( unsigned int j = 0; j < width; ++j )
-					{
-						size_t pos = (i * width * bpp) + (j * bpp);
-						if ( colors.size( ) < pos + 2 )
-						{
-							break;
-						}
-
-						SetPixel( hdc, j, i, RGB( colors[pos], colors[pos + 1], colors[pos + 2] ) );
-					}
-				}
-			}
-			
-			// Draw png
+			switch ( curDrawImage )
 			{
-				unsigned int startOffet = testJFIF.GetWidth( );
-				unsigned int width = testPng.GetWidth( );
-				unsigned int height = testPng.GetHeight( );
-				unsigned char bpp = testPng.GetBytePerPixel( );
-
-				const std::vector<unsigned char>& colors = testPng.GetByteStream( );
-
-				for ( unsigned int i = 0; i < height; ++i )
-				{
-					for ( unsigned int j = 0; j < width; ++j )
-					{
-						size_t pos = (i * width * bpp) + (j * bpp);
-						if ( colors.size( ) < pos + 2 )
-						{
-							break;
-						}
-
-						SetPixel( hdc, j + startOffet, i, RGB( colors[pos], colors[pos + 1], colors[pos + 2] ) );
-					}
-				}
+			case DRAW_PNG:
+				LoadAndRenderImage<PNG>( hdc, "../Image/lena.png", Polychrome( ) );
+				break;
+			case DRAW_JPG:
+				LoadAndRenderImage<JFIF>( hdc, "../Image/lena.jpg", Polychrome( ) );
+				break;
+			case DRAW_PBM:
+				LoadAndRenderImage<NETPBM>( hdc, "../Image/NETPBM/elephant.pbm", Monochrome( ) );
+				break;
+			case DRAW_PGM:
+				LoadAndRenderImage<NETPBM>( hdc, "../Image/NETPBM/elephant.pgm", Monochrome( ) );
+				break;
+			case DRAW_PPM:
+				LoadAndRenderImage<NETPBM>( hdc, "../Image/NETPBM/elephant.ppm", Polychrome( ) );
+				break;
 			}
 
             EndPaint(hWnd, &ps);
         }
         break;
+	case WM_KEYUP:
+		switch ( wParam )
+		{
+		case VK_F1:
+			curDrawImage = DRAW_PNG;
+			InvalidateRect( hWnd, nullptr, true );
+			break;
+		case VK_F2:
+			curDrawImage = DRAW_JPG;
+			InvalidateRect( hWnd, nullptr, true );
+			break;
+		case VK_F3:
+			curDrawImage = DRAW_PBM;
+			InvalidateRect( hWnd, nullptr, true );
+			break;
+		case VK_F4:
+			curDrawImage = DRAW_PGM;
+			InvalidateRect( hWnd, nullptr, true );
+			break;
+		case VK_F5:
+			curDrawImage = DRAW_PPM;
+			InvalidateRect( hWnd, nullptr, true );
+			break;
+		default:
+			break;
+		}
+		break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

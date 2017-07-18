@@ -20,8 +20,6 @@ bool NETPBM::Load( const char* filePath )
 	char skip;
 	file.read( &skip, 1 );
 
-	m_channelDepth = 8;
-
 	if ( magicNum[0] != 'P' )
 	{
 		return false;
@@ -56,6 +54,7 @@ bool NETPBM::Load( const char* filePath )
 
 void NETPBM::HandlePortableBitMap( std::ifstream& file )
 {
+	m_channelDepth = 1;
 	m_bytePerChannel = 1;
 	m_bytePerPixel = 1;
 
@@ -70,14 +69,53 @@ void NETPBM::HandlePortableBitMap( std::ifstream& file )
 
 void NETPBM::HandlePortableGrayMap( std::ifstream& file )
 {
+	m_channelDepth = 8;
+	m_bytePerChannel = 1;
+	m_bytePerPixel = 1;
+
+	int maxValue;
+	file >> maxValue;
+
+	BYTE buffer;
+	while ( file )
+	{
+		file >> buffer;
+		m_colors.push_back( buffer );
+	}
+
+	std::for_each( m_colors.begin( ), m_colors.end( ),
+					[maxValue = maxValue]( BYTE& color )
+					{
+						color = static_cast<BYTE>( static_cast<float>( color ) / maxValue * 255 );
+					} );
 }
 
 void NETPBM::HandlePortablePixMap( std::ifstream& file )
 {
+	m_channelDepth = 8;
+	m_bytePerChannel = 1;
+	m_bytePerPixel = 3;
+
+	int maxValue;
+	file >> maxValue;
+
+	BYTE buffer;
+	while ( file )
+	{
+		file >> buffer;
+		m_colors.push_back( buffer );
+	}
+
+	std::for_each( m_colors.begin( ), m_colors.end( ),
+					[maxValue = maxValue]( BYTE& color )
+					{
+						color = static_cast<BYTE>( static_cast<float>( color ) / maxValue * 255 );
+					} );
 }
 
 void NETPBM::HandlePortableBinaryBitMap( std::ifstream& file )
 {
+	m_channelDepth = 1;
 	m_bytePerChannel = 1;
 	m_bytePerPixel = 1;
 
@@ -90,25 +128,53 @@ void NETPBM::HandlePortableBinaryBitMap( std::ifstream& file )
 
 	for ( int i = 0, end = m_width * m_height; i < end; ++i )
 	{
-		m_colors.push_back( br.GetBit( 1 ) );
+		m_colors.push_back( br.GetBit( 1 ) == 1 ? 255 : 0 );
 	}
-
-	/*std::ofstream dump( "dump.txt" );
-
-	for ( int y = 0; y < m_height; ++y )
-	{
-		for ( int x = 0; x < m_width; ++x )
-		{
-			dump << static_cast<int>( m_colors[y * m_height + x] );
-		}
-		dump << std::endl;
-	}*/
 }
 
 void NETPBM::HandlePortableBinaryGrayMap( std::ifstream& file )
 {
+	m_channelDepth = 8;
+	m_bytePerChannel = 1;
+	m_bytePerPixel = 1;
+
+	int maxValue;
+	file >> maxValue;
+
+	char skip[2];
+	file.read( skip, sizeof( skip ) );
+
+	std::vector<BYTE> buffer;
+	m_colors.resize( m_width * m_height );
+
+	file.read( reinterpret_cast<char*>( m_colors.data( ) ), m_colors.size( ) );
+
+	std::for_each( m_colors.begin( ), m_colors.end( ), 
+					[maxValue = maxValue]( BYTE& color )
+					{
+						color = static_cast<BYTE>( static_cast<float>( color ) / maxValue * 255 );
+					} );
 }
 
 void NETPBM::HandlePortableBinaryPixMap( std::ifstream& file )
 {
+	m_channelDepth = 8;
+	m_bytePerChannel = 1;
+	m_bytePerPixel = 3;
+
+	int maxValue;
+	file >> maxValue;
+
+	char skip;
+	file.read( &skip, sizeof( skip ) );
+
+	m_colors.resize( m_width * m_height * 3 );
+
+	file.read( reinterpret_cast<char*>( m_colors.data( ) ), m_colors.size( ) );
+
+	std::for_each( m_colors.begin( ), m_colors.end( ),
+					[maxValue = maxValue]( BYTE& color )
+					{
+						color = static_cast<BYTE>( static_cast<float>( color ) / maxValue * 255 );
+					} );	
 }
