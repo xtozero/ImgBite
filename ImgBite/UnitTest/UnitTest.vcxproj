@@ -161,6 +161,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="jfif_test.cpp" />
+    <ClCompile Include="rgbe_test.cpp" />
     <ClCompile Include="test_main.cpp" />
   </ItemGroup>
   <ItemGroup>

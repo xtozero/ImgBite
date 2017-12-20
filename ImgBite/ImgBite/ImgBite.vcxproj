@@ -198,14 +198,17 @@
     <ClInclude Include="JFIF\JFIFDebugger.h" />
     <ClInclude Include="NETPBM\NETPBM.h" />
     <ClInclude Include="PNG\PNG.h" />
+    <ClInclude Include="RGBE\RGBE.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JFIF\JFIF.cpp" />
     <ClCompile Include="JFIF\JFIFDebugger.cpp" />
     <ClCompile Include="NETPBM\NETPBM.cpp" />
     <ClCompile Include="PNG\PNG.cpp" />
+    <ClCompile Include="RGBE\RGBE.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
