@@ -25,7 +25,7 @@ decltype(auto) CallComFuncIntenal( std::true_type, Func function, ClassType&& se
 static std::wstring g_wprocessPath;
 static std::string g_processPath;
 
-std::wstring GetFullPath( std::wstring fileName )
+std::wstring GetFullPath( const std::wstring& fileName )
 {
 	if ( g_wprocessPath.size( ) == 0 )
 	{
@@ -45,7 +45,7 @@ std::wstring GetFullPath( std::wstring fileName )
 	return g_wprocessPath + fileName;
 }
 
-std::string GetFullPath( std::string fileName )
+std::string GetFullPath( const std::string& fileName )
 {
 	if ( g_processPath.size( ) == 0 )
 	{

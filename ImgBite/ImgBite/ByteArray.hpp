@@ -13,7 +13,7 @@ public:
 	}
 
 	template <typename T>
-	void operator=( const T& value ) noexcept
+	ByteArray& operator=( const T& value ) noexcept
 	{
 		static_assert(sizeof( T ) == N, "Data type size is not matched");
 		
@@ -25,6 +25,8 @@ public:
 			m_bytes[i] = *pSrc;
 			++pSrc;
 		}
+		
+		return *this;
 	}
 
 	unsigned char operator[]( const size_t idx ) const noexcept
@@ -59,6 +61,9 @@ public:
 	{
 		return GetHostOrder<T>( );
 	}
+
+	ByteArray( ) = default;
+	~ByteArray( ) = default;
 
 private:
 	template <typename T>

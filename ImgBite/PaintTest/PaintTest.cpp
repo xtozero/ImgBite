@@ -79,7 +79,9 @@ void LoadAndRenderImage( HDC hdc, const char* filePath, Polychrome )
 		size_t pos = ( i * width * bpp );
 		for ( unsigned int j = 0; j < width; ++j )
 		{
-			SetPixel( hdc, j, i, RGB( colors[pos++], colors[pos++], colors[pos++] ) );
+			const unsigned char* color = &colors[pos];
+			SetPixel( hdc, j, i, RGB( color[0], color[1], color[2] ) );
+			pos += 3;
 		}
 	}
 }

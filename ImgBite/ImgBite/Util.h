@@ -3,16 +3,16 @@
 #include <cassert>
 #include <cmath>
 
-inline void Rgbe2float( const unsigned char* rgbe, float* dest )
+inline void Rgbe2float( const unsigned char* rgbe, float* dest, float rcpExposure )
 {
 	float f;
 
 	if ( rgbe[3] )
 	{
 		f = ldexpf( 1.0, rgbe[3] - static_cast<int>( 128 + 8 ) );
-		dest[0] = rgbe[0] * f;
-		dest[1] = rgbe[1] * f;
-		dest[2] = rgbe[2] * f;
+		dest[0] = rcpExposure * rgbe[0] * f;
+		dest[1] = rcpExposure * rgbe[1] * f;
+		dest[2] = rcpExposure * rgbe[2] * f;
 	}
 	else
 	{
@@ -76,4 +76,30 @@ inline void XYZ2sRGB( const float* src, float* dest )
 inline float ConvertsRGB2Luminance( const float* sRGB )
 {
 	return 0.2126729f * sRGB[0] + 0.7151522f * sRGB[1] + 0.0721750f * sRGB[2];
+}
+
+template <typename T>
+inline T clamp( T value, T min, T max )
+{
+	return std::max( min, std::min( max, value ) );
+}
+
+// Fast but lossy
+inline void YCbCr2RGBFast( int y, int cb, int cr, BYTE& r, BYTE& g, BYTE& b )
+{
+	y &= 0xff, cb &= 0xff, cr &= 0xff;
+	cb -= 128;
+	cr -= 128;
+
+	r = static_cast<BYTE>( clamp( y + ( ( 91881 * cr ) >> 16 ), 0, 255 ) );
+	g = static_cast<BYTE>( clamp( y - ( ( 22554 * cb ) >> 16 ) - ( ( 46802 * cr ) >> 16 ), 0, 255 ) );
+	b = static_cast<BYTE>( clamp( y + ( ( 116130 * cb ) >> 16 ), 0, 255 ) );
+}
+
+// https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion
+inline void YCbCr2RGB( int y, int cb, int cr, BYTE& r, BYTE& g, BYTE& b )
+{
+	r = static_cast<BYTE>( clamp<double>( round( 1.402 * ( cr - 128 ) + y ), 0, 255 ) );
+	g = static_cast<BYTE>( clamp<double>( round( -0.34414 * ( cb - 128 ) - 0.71414 * ( cr - 128 ) + y ), 0, 255 ) );
+	b = static_cast<BYTE>( clamp<double>( round( 1.772 * ( cb - 128 ) + y ), 0, 255 ) );
 }

@@ -34,9 +34,9 @@ TEST_CASE( "Reinhard Tonemap" )
 	bitmap_image toneMapImage( width, height );
 
 	const BYTE* color = rgbe.GetByteStream( ).data( );
-	for ( int y = 0; y < height; ++y )
+	for ( unsigned int y = 0; y < height; ++y )
 	{
-		for ( int x = 0; x < width; ++x )
+		for ( unsigned int x = 0; x < width; ++x )
 		{
 			toneMapImage.set_pixel( x, y, color[0], color[1], color[2] );
 			color += 3;
@@ -62,9 +62,9 @@ TEST_CASE( "Reinhard Tonemap2" )
 	bitmap_image toneMapImage( width, height );
 
 	const BYTE* color = rgbe.GetByteStream( ).data( );
-	for ( int y = 0; y < height; ++y )
+	for ( unsigned int y = 0; y < height; ++y )
 	{
-		for ( int x = 0; x < width; ++x )
+		for ( unsigned int x = 0; x < width; ++x )
 		{
 			toneMapImage.set_pixel( x, y, color[0], color[1], color[2] );
 			color += 3;

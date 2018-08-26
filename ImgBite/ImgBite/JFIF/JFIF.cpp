@@ -4,42 +4,12 @@
 #include "../DCT.hpp"
 #include "../BitReader.hpp"
 #include "../ByteBufferReader.hpp"
+#include "../Util.h"
 
 #include <bitset>
 #include <iostream>
 #include <numeric>
 #include <sstream>
-
-namespace
-{
-	BYTE ClipColor( const int component )
-	{
-		return static_cast<BYTE>( std::max( 0, std::min( 0xFF, component ) ) );
-	}
-
-	using Color = std::tuple<int, int, int>;
-	// Fast but lossy
-	Color YCbCr2RGB( int y, int cb, int cr )
-	{
-		y &= 0xff, cb &= 0xff, cr &= 0xff;
-		cb -= 128;
-		cr -= 128;
-
-		int r = y + ((91881 * cr) >> 16);
-		int g = y - ((22554 * cb) >> 16) - ((46802 * cr) >> 16);
-		int b = y + ((116130 * cb) >> 16);
-		return Color{ ClipColor( r ), ClipColor( g ), ClipColor( b ) };
-	}
-
-	//	https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion
-	//	Color YCbCr2RGB( int y, int cb, int cr )
-	//	{
-	//		int r = static_cast<int>(round( 1.402 * (cr - 128) + y ));
-	//		int g = static_cast<int>(round( -0.34414 * (cb - 128) - 0.71414 * (cr - 128) + y ));
-	//		int b = static_cast<int>(round( 1.772 * (cb - 128) + y ));
-	//		return Color{ ClipColor( r ), ClipColor( g ), ClipColor( b ) };
-	//	}
-};
 
 bool JFIF::Load( const char * filePath )
 {
@@ -285,7 +255,7 @@ void JFIF::HandleDHTMarker( )
 		HuffmanTable& table = m_huffmanTable[tableClass][tableID];
 
 		int range = 0;
-		int remain = 0x10000; //2^16 + 1
+		int remain = 0x10000; //2^16
 		BYTE symbol = 0;
 
 		for ( int i = 0; i < MAX_CODE_LENGTH; ++i )
@@ -299,7 +269,7 @@ void JFIF::HandleDHTMarker( )
 			}
 		}
 
-		if ( range < 0x10000 )
+		if ( range < 0xFFFF )
 		{
 			table.emplace_back( 0xFFFF, 0, 0 );
 		}
@@ -381,6 +351,8 @@ void JFIF::ProcessDecode( BitReader& bt, const int mcuX, const int mcuY )
 	
 	for ( int i = 0; i < m_comCount; ++i )
 	{
+		std::vector<int>& pixel = m_componentPixel[i];
+
 		for ( int y = 0; y < m_frameDesc[i].m_ySamplingFreq; ++y )
 		{
 			for ( int x = 0; x < m_frameDesc[i].m_xSamplingFreq; ++x )
@@ -412,15 +384,13 @@ void JFIF::ProcessDecode( BitReader& bt, const int mcuX, const int mcuY )
 				DoRowIDCT( vldTable );
 				DoColIDCT( vldTable );
 
-				std::vector<int>& pixel = m_componentPixel[i];
-
 				int startX = mcuX * MCU_WIDTH * m_maxSamplingFreqX + ( x * MCU_WIDTH );
 				int startY = mcuY * MCU_WIDTH * m_maxSamplingFreqY + ( y * MCU_WIDTH );
 
 				int shiftX = 0;
 				int shiftY = 0;
 
-				while ( m_maxSamplingFreqY > ( m_frameDesc[i].m_xSamplingFreq << shiftX ) )
+				while ( m_maxSamplingFreqX > ( m_frameDesc[i].m_xSamplingFreq << shiftX ) )
 				{
 					++shiftX;
 				}
@@ -430,12 +400,12 @@ void JFIF::ProcessDecode( BitReader& bt, const int mcuX, const int mcuY )
 					++shiftY;
 				}
 
-				for ( int h = 0; h < MCU_WIDTH << shiftY; ++h )
+				for ( int h = 0, hEnd = MCU_WIDTH << shiftY; h < hEnd; ++h )
 				{
 					int stride = (startY + h) * m_width;
 					int* input = &vldTable[(h >> shiftY) * MCU_WIDTH];
 
-					for ( int w = 0; w < MCU_WIDTH << shiftX; ++w )
+					for ( int w = 0, wEnd = MCU_WIDTH << shiftX; w < wEnd; ++w )
 					{
 						size_t colorIdx = stride + (startX + w);
 
@@ -462,7 +432,7 @@ std::tuple<int, BYTE> JFIF::GetVLD( BitReader& bt, const HuffmanTable& huffmanTa
 
 	BYTE code = found->m_symbol;
 	int bits = found->m_symbol & 0xF;
-	if ( bits == 0 )
+	if ( bits <= 0 )
 	{
 		return { 0, code };
 	}
@@ -492,10 +462,7 @@ void JFIF::Convert2RGB( )
 
 	for ( size_t i = 0, end = m_width * m_height; i < end; ++i )
 	{
-		std::tie( pColors[0], pColors[1], pColors[2] ) = YCbCr2RGB( 
-														m_componentPixel[0][i],		// Y
-														m_componentPixel[1][i],		// Cb
-														m_componentPixel[2][i] );	// Cr
+		YCbCr2RGBFast( m_componentPixel[0][i], m_componentPixel[1][i], m_componentPixel[2][i], pColors[0], pColors[1], pColors[2] );
 		pColors += m_bytePerPixel;
 	}
 }

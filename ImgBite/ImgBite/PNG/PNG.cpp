@@ -139,12 +139,10 @@ std::vector<BYTE> PNG::InflatePixelData( std::vector<BYTE>& src )
 	stream.avail_in = static_cast<unsigned int>( src.size() );
 	stream.next_in = src.data( );
 
-	constexpr int BUFFER_SIZE = 1024;
-
 	// Inflate data at once
 	stream.avail_out = static_cast<unsigned int>( data.size( ) );
 	stream.next_out = data.data( );
-	inflate( &stream, Z_NO_FLUSH );
+	inflate( &stream, Z_FINISH );
 
  	return data;
 }

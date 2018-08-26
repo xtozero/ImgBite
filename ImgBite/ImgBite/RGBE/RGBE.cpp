@@ -36,7 +36,7 @@ void RGBE::ReinhardToneMapping( float key )
 	m_colors.reserve( m_width * m_height * m_bytePerPixel );
 
 	float avgLum = 0.f;
-	for ( int i = 0, end = m_data.size( ); i < end; i += 3 )
+	for ( size_t i = 0, end = m_data.size( ); i < end; i += 3 )
 	{
 		avgLum += logf( 0.00001f + ConvertsRGB2Luminance( &m_data[i] ) );
 	}
@@ -47,7 +47,7 @@ void RGBE::ReinhardToneMapping( float key )
 	float sRGB[3] = { 0.f, 0.f, 0.f };
 	float scale = key / avgLum;
 	float Lp = 0.f;
-	for ( int i = 0, end = m_data.size( ); i < end; i += 3 )
+	for ( size_t i = 0, end = m_data.size( ); i < end; i += 3 )
 	{
 		sRGB2XYZ( &m_data[i], XYZ );
 		XYZ2Yxy( XYZ, Yxy );
@@ -74,7 +74,7 @@ void RGBE::ReinhardToneMappingVer2( float key )
 	float avgLum = 0.f;
 	float lum = 0.f;
 	float lumWhite = -FLT_MAX;
-	for ( int i = 0, end = m_data.size( ); i < end; i += 3 )
+	for ( size_t i = 0, end = m_data.size( ); i < end; i += 3 )
 	{
 		lum = ConvertsRGB2Luminance( &m_data[i] );
 		lumWhite = std::max( lumWhite, lum );
@@ -88,7 +88,7 @@ void RGBE::ReinhardToneMappingVer2( float key )
 	float sRGB[3] = { 0.f, 0.f, 0.f };
 	float scale = key / avgLum;
 	float Lp = 0.f;
-	for ( int i = 0, end = m_data.size( ); i < end; i += 3 )
+	for ( size_t i = 0, end = m_data.size( ); i < end; i += 3 )
 	{
 		sRGB2XYZ( &m_data[i], XYZ );
 		XYZ2Yxy( XYZ, Yxy );
@@ -176,10 +176,11 @@ bool RGBE::ReadPixel( std::ifstream& file )
 
 	BYTE rgbe[4];
 	float* sRGB = m_data.data( );
+	float rcpExposure = 1.f / m_header.exposure;
 	for ( int i = 0, end = m_width * m_height; i < end; ++i )
 	{
 		file.read( reinterpret_cast<char*>( rgbe ), sizeof( rgbe ) );
-		Rgbe2float( rgbe, sRGB );
+		Rgbe2float( rgbe, sRGB, rcpExposure );
 		sRGB += 3;
 	}
 
@@ -203,6 +204,7 @@ bool RGBE::ReadPixelRunLength( std::ifstream& file )
 
 	m_data.resize( m_width * m_height * 3 );
 	float* sRGB = m_data.data( );
+	float rcpExposure = 1.f / m_header.exposure;
 
 	while ( numScanlines > 0 )
 	{
@@ -221,11 +223,6 @@ bool RGBE::ReadPixelRunLength( std::ifstream& file )
 		if ( scanlineBuf == nullptr )
 		{
 			scanlineBuf = new BYTE[4 * m_width];
-		}
-
-		if ( scanlineBuf == nullptr )
-		{
-			return false;
 		}
 
 		ptr = &scanlineBuf[0];
@@ -274,7 +271,7 @@ bool RGBE::ReadPixelRunLength( std::ifstream& file )
 			rgbe[1] = scanlineBuf[i + m_width];
 			rgbe[2] = scanlineBuf[i + 2 * m_width];
 			rgbe[3] = scanlineBuf[i + 3 * m_width];
-			Rgbe2float( rgbe, sRGB );
+			Rgbe2float( rgbe, sRGB, rcpExposure );
 			sRGB += 3;
 		}
 
